@@ -59,6 +59,17 @@
             android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
+        <!-- Admin Medicine Screens -->
+        <activity
+            android:name=".view.AdminMedicineManagement"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
+        <activity
+            android:name=".view.AddMedicineActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
     </application>
 
 </manifest>

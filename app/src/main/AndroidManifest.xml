@@ -29,17 +29,17 @@
         <!-- Auth Screens -->
         <activity
             android:name=".view.SignInActivity"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
         <activity
             android:name=".view.SignUpActivity"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
         <activity
             android:name=".view.ForgotPasswordActivity"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
         <!-- Main App -->
@@ -50,13 +50,13 @@
 
         <!-- Admin Screens -->
         <activity
-            android:name=".view.MedicineCategoriesActivity"
+            android:name=".view.AdminCategoryManagement"
             android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
         <activity
             android:name=".view.AddCategoryActivity"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
     </application>

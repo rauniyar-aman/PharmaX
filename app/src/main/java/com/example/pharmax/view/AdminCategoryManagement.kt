@@ -61,19 +61,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.CategoryModel
 import com.example.pharmax.viewmodel.CategoryViewModel
 
-class MedicineCategoriesActivity : ComponentActivity() {
+class AdminCategoryManagement : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MedicineCategoriesBody()
+            AdminCategoryManagementBody()
         }
     }
 }
 
-// Stateful — handles ViewModel + Firebase
 @Composable
-fun MedicineCategoriesBody() {
+fun AdminCategoryManagementBody() {
     val context = LocalContext.current
     val vm: CategoryViewModel = viewModel()
 
@@ -90,7 +89,7 @@ fun MedicineCategoriesBody() {
         }
     }
 
-    MedicineCategoriesScreen(
+    AdminCategoryManagementScreen(
         categories = categories,
         isLoading = isLoading,
         onToggleStatus = { id, status -> vm.toggleStatus(id, status) },
@@ -112,9 +111,8 @@ fun MedicineCategoriesBody() {
     )
 }
 
-// Pure UI — safe to preview
 @Composable
-fun MedicineCategoriesScreen(
+fun AdminCategoryManagementScreen(
     categories: List<CategoryModel> = emptyList(),
     isLoading: Boolean = false,
     onToggleStatus: (String, Boolean) -> Unit = { _, _ -> },
@@ -155,7 +153,6 @@ fun MedicineCategoriesScreen(
                 .padding(paddingValues)
         ) {
 
-            // ── Top bar ───────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -173,7 +170,6 @@ fun MedicineCategoriesScreen(
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
 
-                // ── Stats row ─────────────────────────────────────────────
                 item {
                     Row(
                         modifier = Modifier
@@ -188,7 +184,6 @@ fun MedicineCategoriesScreen(
                     }
                 }
 
-                // ── Sync status card ──────────────────────────────────────
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -209,7 +204,6 @@ fun MedicineCategoriesScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // ── Search bar ────────────────────────────────────────────
                 item {
                     OutlinedTextField(
                         value = searchQuery,
@@ -229,7 +223,6 @@ fun MedicineCategoriesScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                // ── Management list header + filter chips ─────────────────
                 item {
                     Text(
                         text = "Management List",
@@ -257,7 +250,6 @@ fun MedicineCategoriesScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                // ── Loading indicator ─────────────────────────────────────
                 if (isLoading) {
                     item {
                         Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -266,7 +258,6 @@ fun MedicineCategoriesScreen(
                     }
                 }
 
-                // ── Empty state ───────────────────────────────────────────
                 if (!isLoading && filtered.isEmpty()) {
                     item {
                         Column(
@@ -282,7 +273,6 @@ fun MedicineCategoriesScreen(
                     }
                 }
 
-                // ── Category list ─────────────────────────────────────────
                 items(filtered) { category ->
                     CategoryListItem(
                         category = category,
@@ -352,7 +342,6 @@ fun CategoryListItem(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Icon circle
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -361,9 +350,7 @@ fun CategoryListItem(
                 ) {
                     Text(text = category.icon, fontSize = 22.sp)
                 }
-
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = category.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
@@ -391,18 +378,13 @@ fun CategoryListItem(
                         }
                     }
                 }
-
-                // Active toggle
                 Switch(
                     checked = category.isActive,
                     onCheckedChange = { onToggle(it) },
                     colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF006B2C))
                 )
             }
-
             Spacer(modifier = Modifier.height(10.dp))
-
-            // Action row
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -427,11 +409,11 @@ fun CategoryListItem(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun MedicineCategoriesPreview() {
+fun AdminCategoryManagementPreview() {
     val sampleCategories = listOf(
         CategoryModel("1", "Antibiotics", "/slug/antibiotics", "For bacterial infections", "💊", "OTC", true, 142),
         CategoryModel("2", "Vitamins", "/slug/vitamins", "Dietary supplements", "🌿", "OTC", true, 58),
         CategoryModel("3", "Pain Relief", "/slug/pain-relief", "Analgesics", "🩹", "Prescription", false, 34)
     )
-    MedicineCategoriesScreen(categories = sampleCategories)
+    AdminCategoryManagementScreen(categories = sampleCategories)
 }

@@ -46,7 +46,7 @@ class UserRepoImpl : UserRepo {
 
                 if (auth.currentUser?.isEmailVerified == false) {
                     auth.signOut()
-                    callback(false, "Please verify your email before signing in. Check your inbox.", null)
+                    callback(false, "Email not verified. Check your inbox or spam folder.", null)
                     return@addOnSuccessListener
                 }
 

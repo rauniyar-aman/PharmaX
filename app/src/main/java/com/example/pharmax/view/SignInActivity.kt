@@ -234,7 +234,17 @@ fun SignInScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Can't sign in? Check your spam folder for the verification email.",
+                fontSize = 12.sp,
+                color = Color(0xFF6F7A6E),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row {
                 Text(text = "New here?", color = Color(0xFF3F493F), fontSize = 14.sp)

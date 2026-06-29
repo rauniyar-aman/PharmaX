@@ -94,6 +94,23 @@ fun AdminMedicineManagementBody() {
         medicines = medicines,
         isLoading = isLoading,
         onDelete = { id -> vm.deleteMedicine(id) {} },
+        onView = { medicine ->
+            val intent = Intent(context, AdminMedicineDetailActivity::class.java).apply {
+                putExtra("medicineId", medicine.medicineId)
+                putExtra("name", medicine.name)
+                putExtra("brand", medicine.brand)
+                putExtra("category", medicine.category)
+                putExtra("description", medicine.description)
+                putExtra("price", medicine.price)
+                putExtra("stock", medicine.stock)
+                putExtra("dosage", medicine.dosage)
+                putExtra("requiresPrescription", medicine.requiresPrescription)
+                putExtra("type", medicine.type)
+                putExtra("howToUse", medicine.howToUse)
+                putExtra("imageUrl", medicine.imageUrl)
+            }
+            context.startActivity(intent)
+        },
         onEdit = { medicine ->
             val intent = Intent(context, AddMedicineActivity::class.java).apply {
                 putExtra("medicineId", medicine.medicineId)
@@ -120,6 +137,7 @@ fun AdminMedicineManagementScreen(
     medicines: List<MedicineModel> = emptyList(),
     isLoading: Boolean = false,
     onDelete: (String) -> Unit = {},
+    onView: (MedicineModel) -> Unit = {},
     onEdit: (MedicineModel) -> Unit = {},
     onAddClick: () -> Unit = {}
 ) {
@@ -178,6 +196,13 @@ fun AdminMedicineManagementScreen(
                             .background(Color.Red, CircleShape)
                             .align(Alignment.TopEnd)
                     )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
 
@@ -269,6 +294,7 @@ fun AdminMedicineManagementScreen(
                 items(filtered) { medicine ->
                     MedicineListItem(
                         medicine = medicine,
+                        onView = { onView(medicine) },
                         onEdit = { onEdit(medicine) },
                         onDelete = { onDelete(medicine.medicineId) }
                     )
@@ -322,6 +348,7 @@ fun MedicineFilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) 
 @Composable
 fun MedicineListItem(
     medicine: MedicineModel,
+    onView: () -> Unit = {},
     onEdit: () -> Unit = {},
     onDelete: () -> Unit = {}
 ) {
@@ -398,7 +425,9 @@ fun MedicineListItem(
                             imageVector = Icons.Default.Visibility,
                             contentDescription = "View",
                             tint = Color(0xFF6F7A6E),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable { onView() }
                         )
                         Icon(
                             imageVector = Icons.Default.Edit,

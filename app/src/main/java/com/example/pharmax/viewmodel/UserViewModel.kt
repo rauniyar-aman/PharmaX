@@ -22,6 +22,9 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
     private val _isLoggedOut = MutableStateFlow(false)
     val isLoggedOut: StateFlow<Boolean> = _isLoggedOut.asStateFlow()
 
+    private val _isEmailUnverified = MutableStateFlow(false)
+    val isEmailUnverified: StateFlow<Boolean> = _isEmailUnverified.asStateFlow()
+
     fun clearMessage() {
         _message.value = null
     }
@@ -32,12 +35,26 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
             return
         }
         _loading.value = true
+        _isEmailUnverified.value = false
         repo.login(email.trim(), password) { success, msg, userData ->
             _loading.value = false
-            _message.value = msg
-            if (success && userData != null) {
-                _user.value = userData
+            if (msg == "EMAIL_NOT_VERIFIED") {
+                _isEmailUnverified.value = true
+                _message.value = "Email not verified. Check your inbox or spam folder."
+            } else {
+                _isEmailUnverified.value = false
+                _message.value = msg
+                if (success && userData != null) _user.value = userData
             }
+        }
+    }
+
+    fun resendVerificationEmail(email: String, password: String) {
+        if (email.isBlank() || password.isBlank()) return
+        _loading.value = true
+        repo.resendVerificationEmail(email.trim(), password) { _, msg ->
+            _loading.value = false
+            _message.value = msg
         }
     }
 
@@ -77,6 +94,19 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
         }
 
         _loading.value = true
+        repo.checkPhoneExists(phone) { exists ->
+            if (exists) {
+                _loading.value = false
+                _message.value = "This phone number is already registered"
+                return@checkPhoneExists
+            }
+            proceedWithRegistration(fullName, email, phone, password, onSuccess)
+        }
+    }
+
+    private fun proceedWithRegistration(
+        fullName: String, email: String, phone: String, password: String, onSuccess: () -> Unit
+    ) {
         repo.register(email.trim(), password) { success, message, uid ->
             if (success) {
                 val user = UserModel(

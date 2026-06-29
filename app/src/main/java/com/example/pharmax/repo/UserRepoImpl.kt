@@ -46,7 +46,7 @@ class UserRepoImpl : UserRepo {
 
                 if (auth.currentUser?.isEmailVerified == false) {
                     auth.signOut()
-                    callback(false, "Email not verified. Check your inbox or spam folder.", null)
+                    callback(false, "EMAIL_NOT_VERIFIED", null)
                     return@addOnSuccessListener
                 }
 
@@ -106,6 +106,31 @@ class UserRepoImpl : UserRepo {
     override fun rollbackCurrentUserRegistration() {
         auth.currentUser?.delete()
         auth.signOut()
+    }
+
+    override fun checkPhoneExists(phone: String, callback: (Boolean) -> Unit) {
+        ref.orderByChild("phone").equalTo(phone)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    callback(snapshot.exists())
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    callback(false)
+                }
+            })
+    }
+
+    override fun resendVerificationEmail(email: String, password: String, callback: (Boolean, String) -> Unit) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
+                auth.currentUser?.sendEmailVerification()
+                    ?.addOnCompleteListener { task ->
+                        auth.signOut()
+                        if (task.isSuccessful) callback(true, "Verification email sent. Check your inbox or spam folder.")
+                        else callback(false, task.exception?.message ?: "Failed to send verification email")
+                    } ?: run { auth.signOut(); callback(false, "Failed to send verification email") }
+            }
+            .addOnFailureListener { callback(false, it.message ?: "Failed to send verification email") }
     }
 
     override fun sendVerificationEmail(callback: (Boolean, String) -> Unit) {

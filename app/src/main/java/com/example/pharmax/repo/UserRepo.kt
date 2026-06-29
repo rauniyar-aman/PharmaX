@@ -29,7 +29,11 @@ interface UserRepo {
 
     fun rollbackCurrentUserRegistration()
 
+    fun checkPhoneExists(phone: String, callback: (Boolean) -> Unit)
+
     fun sendVerificationEmail(callback: (Boolean, String) -> Unit)
+
+    fun resendVerificationEmail(email: String, password: String, callback: (Boolean, String) -> Unit)
 
     fun signOutSilently()
 

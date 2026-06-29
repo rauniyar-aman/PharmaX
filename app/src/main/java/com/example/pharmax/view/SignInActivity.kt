@@ -69,6 +69,7 @@ fun SignInBody() {
     val message by vm.message.collectAsState()
     val isLoading by vm.loading.collectAsState()
     val user by vm.user.collectAsState()
+    val isEmailUnverified by vm.isEmailUnverified.collectAsState()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -93,12 +94,14 @@ fun SignInBody() {
         password = password,
         passwordVisible = passwordVisible,
         isLoading = isLoading,
+        showResendVerification = isEmailUnverified,
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onTogglePassword = { passwordVisible = !passwordVisible },
         onSignIn = { vm.login(email, password) },
         onForgotPassword = { context.startActivity(Intent(context, ForgotPasswordActivity::class.java)) },
-        onCreateAccount = { context.startActivity(Intent(context, SignUpActivity::class.java)) }
+        onCreateAccount = { context.startActivity(Intent(context, SignUpActivity::class.java)) },
+        onResendVerification = { vm.resendVerificationEmail(email, password) }
     )
 }
 
@@ -108,12 +111,14 @@ fun SignInScreen(
     password: String = "",
     passwordVisible: Boolean = false,
     isLoading: Boolean = false,
+    showResendVerification: Boolean = false,
     onEmailChange: (String) -> Unit = {},
     onPasswordChange: (String) -> Unit = {},
     onTogglePassword: () -> Unit = {},
     onSignIn: () -> Unit = {},
     onForgotPassword: () -> Unit = {},
-    onCreateAccount: () -> Unit = {}
+    onCreateAccount: () -> Unit = {},
+    onResendVerification: () -> Unit = {}
 ) {
     Scaffold { paddingValues ->
         Column(
@@ -243,6 +248,35 @@ fun SignInScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
             )
+
+            if (showResendVerification) {
+                Spacer(modifier = Modifier.height(8.dp))
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .background(Color(0xFFFFF3CD), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Your email is not verified yet.",
+                            fontSize = 13.sp,
+                            color = Color(0xFF856404),
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Resend verification email",
+                            fontSize = 13.sp,
+                            color = Color(0xFF0051D5),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable { onResendVerification() }
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 

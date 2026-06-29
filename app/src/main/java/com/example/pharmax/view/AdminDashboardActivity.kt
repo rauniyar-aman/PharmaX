@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.viewmodel.MedicineViewModel
+import com.example.pharmax.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 class AdminDashboardActivity : ComponentActivity() {
@@ -76,9 +77,11 @@ class AdminDashboardActivity : ComponentActivity() {
 fun AdminDashboardBody() {
     val context = LocalContext.current
     val vm: MedicineViewModel = viewModel()
+    val userVm: UserViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val medicines by vm.medicines.collectAsState()
+    val isLoggedOut by userVm.isLoggedOut.collectAsState()
 
     LaunchedEffect(Unit) { vm.loadMedicines() }
 
@@ -86,6 +89,14 @@ fun AdminDashboardBody() {
         if (!message.isNullOrBlank()) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             vm.clearMessage()
+        }
+    }
+
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut) {
+            val intent = Intent(context, SignInActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
         }
     }
 
@@ -97,7 +108,8 @@ fun AdminDashboardBody() {
         onAddMedicine = { context.startActivity(Intent(context, AddMedicineActivity::class.java)) },
         onAddCategory = { context.startActivity(Intent(context, AddCategoryActivity::class.java)) },
         onNavigateMedicines = { context.startActivity(Intent(context, AdminMedicineManagement::class.java)) },
-        onNavigateCategories = { context.startActivity(Intent(context, AdminCategoryManagement::class.java)) }
+        onNavigateCategories = { context.startActivity(Intent(context, AdminCategoryManagement::class.java)) },
+        onLogout = { userVm.logOut() }
     )
 }
 
@@ -108,7 +120,8 @@ fun AdminDashboardScreen(
     onAddMedicine: () -> Unit = {},
     onAddCategory: () -> Unit = {},
     onNavigateMedicines: () -> Unit = {},
-    onNavigateCategories: () -> Unit = {}
+    onNavigateCategories: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -119,7 +132,8 @@ fun AdminDashboardScreen(
             AdminSideDrawer(
                 onClose = { scope.launch { drawerState.close() } },
                 onNavigateMedicines = { scope.launch { drawerState.close() }; onNavigateMedicines() },
-                onNavigateCategories = { scope.launch { drawerState.close() }; onNavigateCategories() }
+                onNavigateCategories = { scope.launch { drawerState.close() }; onNavigateCategories() },
+                onLogout = { scope.launch { drawerState.close() }; onLogout() }
             )
         }
     ) {
@@ -274,7 +288,8 @@ fun AdminDashboardScreen(
 fun AdminSideDrawer(
     onClose: () -> Unit = {},
     onNavigateMedicines: () -> Unit = {},
-    onNavigateCategories: () -> Unit = {}
+    onNavigateCategories: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val navItems = listOf(
         Triple("Dashboard", Icons.Default.Dashboard, true),
@@ -288,7 +303,8 @@ fun AdminSideDrawer(
             .width(280.dp)
             .fillMaxHeight()
             .background(Color.White)
-            .padding(top = 48.dp)
+            .padding(top = 48.dp),
+        verticalArrangement = Arrangement.Top
     ) {
         Row(
             modifier = Modifier
@@ -332,6 +348,25 @@ fun AdminSideDrawer(
                     }
                 }
             )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+        HorizontalDivider(color = Color(0xFFF1F4F8))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onLogout() }
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Logout",
+                tint = Color(0xFFBA1A1A),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(14.dp))
+            Text(text = "Logout", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFBA1A1A))
         }
     }
 }

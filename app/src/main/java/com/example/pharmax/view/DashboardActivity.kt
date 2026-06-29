@@ -277,7 +277,9 @@ fun DashboardBottomNav(activeTab: String = "Home") {
             Toast.makeText(context, "Prescriptions coming soon", Toast.LENGTH_SHORT).show()
         }
         BottomNavItem(icon = Icons.Default.Person, label = "Profile", isActive = activeTab == "Profile") {
-            Toast.makeText(context, "Profile coming soon", Toast.LENGTH_SHORT).show()
+            if (activeTab != "Profile") {
+                context.startActivity(Intent(context, ProfileActivity::class.java))
+            }
         }
     }
 }

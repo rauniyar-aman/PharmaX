@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".PharmaXApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -49,6 +50,11 @@
             android:theme="@style/Theme.PharmaX" />
 
         <!-- User Screens -->
+        <activity
+            android:name=".view.ProfileActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
         <activity
             android:name=".view.BrowseAllMedicinesActivity"
             android:exported="true"

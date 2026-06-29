@@ -173,13 +173,16 @@ fun AddMedicineScreen(
                 color = Color(0xFF006B2C),
                 modifier = Modifier.weight(1f)
             )
-            Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF6F7A6E), modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(10.dp))
+            Box {
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Box(
-                modifier = Modifier.size(32.dp).background(Color(0xFF0051D5), CircleShape),
+                modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "PA", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
 

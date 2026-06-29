@@ -84,7 +84,7 @@ fun SignUpBody() {
     SignUpScreen(
         isLoading = isLoading,
         onSignUp = { fullName, email, phone, password, confirmPassword ->
-            vm.registerUser(fullName, email, phone, password, confirmPassword) {
+            vm.registerUser(fullName, email, "+977$phone", password, confirmPassword) {
                 context.startActivity(Intent(context, SignInActivity::class.java))
                 (context as? Activity)?.finish()
             }
@@ -104,6 +104,7 @@ fun SignUpScreen(
     var fullName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var confirmEmail by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -111,9 +112,11 @@ fun SignUpScreen(
     var agreedToTerms by remember { mutableStateOf(false) }
     var submitted by remember { mutableStateOf(false) }
 
+    val emailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     val fullNameError = submitted && fullName.isBlank()
     val phoneError = submitted && phone.isBlank()
-    val emailError = submitted && (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
+    val emailError = submitted && (email.isBlank() || !emailValid)
+    val confirmEmailError = submitted && (confirmEmail.isBlank() || confirmEmail != email)
     val passwordError = submitted && password.isBlank()
     val confirmPasswordError = submitted && (confirmPassword.isBlank() || confirmPassword != password)
 
@@ -161,8 +164,18 @@ fun SignUpScreen(
 
                 RequiredLabel("Phone Number")
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("+977 98XXXXXXXX") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = phoneError,
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { if (it.length <= 10 && it.all { c -> c.isDigit() }) phone = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("9XXXXXXXX") },
+                    prefix = { Text("+977 ", color = Color(0xFF0E1D2A), fontWeight = FontWeight.Medium) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(8.dp),
+                    isError = phoneError,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White)
+                )
                 if (phoneError) ErrorText("Phone number is required")
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -172,6 +185,14 @@ fun SignUpScreen(
                 OutlinedTextField(value = email, onValueChange = { email = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("email@example.com") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = emailError,
                     colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
                 if (emailError) ErrorText(if (email.isBlank()) "Email address is required" else "Please enter a valid email address")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                RequiredLabel("Confirm Email")
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = confirmEmail, onValueChange = { confirmEmail = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Re-enter your email") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = confirmEmailError,
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                if (confirmEmailError) ErrorText(if (confirmEmail.isBlank()) "Please confirm your email" else "Email addresses do not match")
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -220,8 +241,7 @@ fun SignUpScreen(
                 ElevatedButton(
                     onClick = {
                         submitted = true
-                        val emailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                        if (fullName.isBlank() || phone.isBlank() || email.isBlank() || !emailValid || password.isBlank() || confirmPassword.isBlank() || confirmPassword != password) return@ElevatedButton
+                        if (fullName.isBlank() || phone.isBlank() || email.isBlank() || !emailValid || confirmEmail.isBlank() || confirmEmail != email || password.isBlank() || confirmPassword.isBlank() || confirmPassword != password) return@ElevatedButton
                         if (!agreedToTerms) { onShowError("Please agree to the Terms of Service"); return@ElevatedButton }
                         onSignUp(fullName, email, phone, password, confirmPassword)
                     },

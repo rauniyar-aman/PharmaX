@@ -26,24 +26,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Inventory
-import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalNavigationDrawer
@@ -78,7 +72,6 @@ class AdminDashboardActivity : ComponentActivity() {
     }
 }
 
-// Stateful — handles ViewModel + Firebase
 @Composable
 fun AdminDashboardBody() {
     val context = LocalContext.current
@@ -86,7 +79,6 @@ fun AdminDashboardBody() {
 
     val message by vm.message.collectAsState()
     val medicines by vm.medicines.collectAsState()
-    val isLoading by vm.loading.collectAsState()
 
     LaunchedEffect(Unit) { vm.loadMedicines() }
 
@@ -109,7 +101,6 @@ fun AdminDashboardBody() {
     )
 }
 
-// Pure UI — safe to preview
 @Composable
 fun AdminDashboardScreen(
     lowStockMedicines: List<MedicineModel> = emptyList(),
@@ -183,23 +174,7 @@ fun AdminDashboardScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
 
-                // ── 2×2 Stat grid ─────────────────────────────────────────
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    AdminStatDashCard(
-                        label = "Total Orders",
-                        value = "128",
-                        color = Color(0xFF006B2C),
-                        bgColor = Color(0xFFE8F5E9),
-                        modifier = Modifier.weight(1f)
-                    )
-                    AdminStatDashCard(
-                        label = "Revenue Today",
-                        value = "NPR 45,200",
-                        color = Color(0xFF0051D5),
-                        bgColor = Color(0xFFE3EFFF),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                // ── 2 Stat cards ──────────────────────────────────────────
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AdminStatDashCard(
                         label = "Pending Prescriptions",
@@ -215,33 +190,6 @@ fun AdminDashboardScreen(
                         bgColor = Color(0xFFFFEDED),
                         modifier = Modifier.weight(1f)
                     )
-                }
-
-                // ── Recent Orders ─────────────────────────────────────────
-                AdminSectionHeader(title = "Recent Orders")
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column {
-                        listOf(
-                            Triple("#ORD-1042", "Ramesh Sharma", "NPR 850") to Pair("Delivered", Color(0xFF006B2C)),
-                            Triple("#ORD-1041", "Sita Rana", "NPR 320") to Pair("Pending", Color(0xFFE65100)),
-                            Triple("#ORD-1040", "Anil KC", "NPR 1,200") to Pair("Processing", Color(0xFF0051D5)),
-                            Triple("#ORD-1039", "Priya Thapa", "NPR 460") to Pair("Cancelled", Color(0xFFBA1A1A))
-                        ).forEachIndexed { index, (order, status) ->
-                            RecentOrderRow(
-                                orderId = order.first,
-                                customer = order.second,
-                                amount = order.third,
-                                status = status.first,
-                                statusColor = status.second,
-                                time = "${(index + 1) * 12} mins ago"
-                            )
-                            if (index < 3) HorizontalDivider(color = Color(0xFFF1F4F8))
-                        }
-                    }
                 }
 
                 // ── Prescriptions Awaiting Verification ───────────────────
@@ -332,13 +280,7 @@ fun AdminSideDrawer(
         Triple("Dashboard", Icons.Default.Dashboard, true),
         Triple("Medicines", Icons.Default.Medication, false),
         Triple("Categories", Icons.Default.Category, false),
-        Triple("Inventory", Icons.Default.Inventory, false),
-        Triple("Prescriptions", Icons.Default.Description, false),
-        Triple("Orders", Icons.Default.ReceiptLong, false),
-        Triple("Customers", Icons.Default.Group, false),
-        Triple("Delivery", Icons.Default.LocalShipping, false),
-        Triple("Reports", Icons.Default.BarChart, false),
-        Triple("Settings", Icons.Default.Settings, false)
+        Triple("Prescriptions", Icons.Default.Description, false)
     )
 
     Column(
@@ -348,7 +290,6 @@ fun AdminSideDrawer(
             .background(Color.White)
             .padding(top = 48.dp)
     ) {
-        // Drawer header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -445,28 +386,6 @@ fun AdminStatDashCard(label: String, value: String, color: Color, bgColor: Color
 @Composable
 fun AdminSectionHeader(title: String) {
     Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
-}
-
-@Composable
-fun RecentOrderRow(orderId: String, customer: String, amount: String, status: String, statusColor: Color, time: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = orderId, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
-            Text(text = customer, fontSize = 12.sp, color = Color(0xFF6F7A6E))
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(text = amount, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(6.dp).background(statusColor, CircleShape))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(text = status, fontSize = 11.sp, color = statusColor, fontWeight = FontWeight.Medium)
-            }
-            Text(text = time, fontSize = 10.sp, color = Color(0xFF6F7A6E))
-        }
-    }
 }
 
 @Composable

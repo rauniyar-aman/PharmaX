@@ -50,6 +50,11 @@
 
         <!-- User Screens -->
         <activity
+            android:name=".view.BrowseAllMedicinesActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
+        <activity
             android:name=".view.BrowseCategoriesActivity"
             android:exported="true"
             android:theme="@style/Theme.PharmaX" />

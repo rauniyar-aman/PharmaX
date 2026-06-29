@@ -59,6 +59,12 @@
             android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
+        <!-- Admin Dashboard -->
+        <activity
+            android:name=".view.AdminDashboardActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
         <!-- Admin Medicine Screens -->
         <activity
             android:name=".view.AdminMedicineManagement"
@@ -67,6 +73,11 @@
 
         <activity
             android:name=".view.AddMedicineActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
+        <activity
+            android:name=".view.AdminMedicineDetailActivity"
             android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 

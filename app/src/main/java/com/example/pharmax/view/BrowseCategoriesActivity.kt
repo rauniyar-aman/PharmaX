@@ -34,6 +34,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -105,10 +106,14 @@ fun BrowseCategoriesScreen(
         it.type.contains(searchQuery, ignoreCase = true)
     }
 
+    Scaffold(
+        bottomBar = { DashboardBottomNav(activeTab = "Medicines") }
+    ) { innerPadding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF7F9FF))
+            .padding(innerPadding)
     ) {
 
         // ── Top bar ───────────────────────────────────────────────────────
@@ -206,6 +211,7 @@ fun BrowseCategoriesScreen(
             }
         }
     }
+    } // end Scaffold
 }
 
 @Composable

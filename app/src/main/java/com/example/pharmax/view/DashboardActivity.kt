@@ -111,7 +111,7 @@ fun DashboardScreen(firstName: String = "User") {
     }
 
     Scaffold(
-        bottomBar = { DashboardBottomNav() }
+        bottomBar = { DashboardBottomNav(activeTab = "Home") }
     ) { innerPadding ->
 
         Column(
@@ -167,7 +167,10 @@ fun DashboardScreen(firstName: String = "User") {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                QuickChip(label = "Browse Medicines", icon = Icons.Default.Medication) {
+                QuickChip(label = "All Medicines", icon = Icons.Default.Medication) {
+                    context.startActivity(Intent(context, BrowseAllMedicinesActivity::class.java))
+                }
+                QuickChip(label = "By Category", icon = Icons.Default.Favorite) {
                     context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
                 }
                 QuickChip(label = "Upload Prescription", icon = Icons.Default.Add) {
@@ -251,21 +254,29 @@ fun CategoryChip(label: String, bgColor: Color, iconTint: Color) {
 }
 
 @Composable
-fun DashboardBottomNav() {
+fun DashboardBottomNav(activeTab: String = "Home") {
     val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth().background(Color.White).padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BottomNavItem(icon = Icons.Default.Home, label = "Home", isActive = true, onClick = {})
-        BottomNavItem(icon = Icons.Default.Medication, label = "Medicines", isActive = false) {
-            context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
+        BottomNavItem(icon = Icons.Default.Home, label = "Home", isActive = activeTab == "Home") {
+            if (activeTab != "Home") {
+                val intent = Intent(context, DashboardActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                context.startActivity(intent)
+            }
         }
-        BottomNavItem(icon = Icons.Default.Description, label = "Prescriptions", isActive = false) {
+        BottomNavItem(icon = Icons.Default.Medication, label = "Medicines", isActive = activeTab == "Medicines") {
+            if (activeTab != "Medicines") {
+                context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
+            }
+        }
+        BottomNavItem(icon = Icons.Default.Description, label = "Prescriptions", isActive = activeTab == "Prescriptions") {
             Toast.makeText(context, "Prescriptions coming soon", Toast.LENGTH_SHORT).show()
         }
-        BottomNavItem(icon = Icons.Default.Person, label = "Profile", isActive = false) {
+        BottomNavItem(icon = Icons.Default.Person, label = "Profile", isActive = activeTab == "Profile") {
             Toast.makeText(context, "Profile coming soon", Toast.LENGTH_SHORT).show()
         }
     }

@@ -31,6 +31,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -81,10 +82,14 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
         else         -> "In Stock"
     }
 
+    Scaffold(
+        bottomBar = { DashboardBottomNav(activeTab = "Medicines") }
+    ) { innerPadding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF7F9FF))
+            .padding(innerPadding)
     ) {
 
         // ── Top bar ───────────────────────────────────────────────────────
@@ -256,6 +261,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
+    } // end Scaffold
 }
 
 @Composable

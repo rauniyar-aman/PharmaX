@@ -48,6 +48,17 @@
             android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
+        <!-- User Screens -->
+        <activity
+            android:name=".view.BrowseCategoriesActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
+        <activity
+            android:name=".view.MedicineListActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
         <!-- Admin Screens -->
         <activity
             android:name=".view.AdminCategoryManagement"

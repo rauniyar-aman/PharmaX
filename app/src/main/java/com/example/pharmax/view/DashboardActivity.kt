@@ -168,7 +168,7 @@ fun DashboardScreen(firstName: String = "User") {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 QuickChip(label = "Browse Medicines", icon = Icons.Default.Medication) {
-                    Toast.makeText(context, "Medicines coming soon", Toast.LENGTH_SHORT).show()
+                    context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
                 }
                 QuickChip(label = "Upload Prescription", icon = Icons.Default.Add) {
                     Toast.makeText(context, "Upload Prescription coming soon", Toast.LENGTH_SHORT).show()
@@ -194,7 +194,7 @@ fun DashboardScreen(firstName: String = "User") {
                     shape = RoundedCornerShape(50.dp),
                     color = Color(0xFF00501F),
                     modifier = Modifier.height(36.dp).clickable {
-                        Toast.makeText(context, "All categories coming soon", Toast.LENGTH_SHORT).show()
+                        context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
                     }
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -260,7 +260,7 @@ fun DashboardBottomNav() {
     ) {
         BottomNavItem(icon = Icons.Default.Home, label = "Home", isActive = true, onClick = {})
         BottomNavItem(icon = Icons.Default.Medication, label = "Medicines", isActive = false) {
-            Toast.makeText(context, "Medicines coming soon", Toast.LENGTH_SHORT).show()
+            context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
         }
         BottomNavItem(icon = Icons.Default.Description, label = "Prescriptions", isActive = false) {
             Toast.makeText(context, "Prescriptions coming soon", Toast.LENGTH_SHORT).show()

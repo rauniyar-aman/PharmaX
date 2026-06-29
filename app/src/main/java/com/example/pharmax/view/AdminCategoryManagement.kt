@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -162,7 +163,18 @@ fun AdminCategoryManagementScreen(
             ) {
                 Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "Medicine Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
+                Text(text = "Medicine Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C), modifier = Modifier.weight(1f))
+                Box {
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                    Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
 
             LazyColumn(

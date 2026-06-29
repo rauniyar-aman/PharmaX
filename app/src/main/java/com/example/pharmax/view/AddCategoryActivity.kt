@@ -77,20 +77,46 @@ class AddCategoryActivity : ComponentActivity() {
         }
 
         setContent {
-            AddCategoryScreen(editCategory = editCategory)
+            AddCategoryBody(editCategory = editCategory, onBack = { finish() })
         }
     }
 }
 
 @Composable
-fun AddCategoryScreen(editCategory: CategoryModel? = null) {
+fun AddCategoryBody(editCategory: CategoryModel? = null, onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val vm: CategoryViewModel = viewModel()
-
     val message by vm.message.collectAsState()
     val isLoading by vm.loading.collectAsState()
 
-    val isEditMode = editCategory != null
+    LaunchedEffect(message) {
+        if (!message.isNullOrBlank()) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            vm.clearMessage()
+        }
+    }
+
+    AddCategoryScreen(
+        editCategory = editCategory,
+        isLoading = isLoading,
+        onSave = { name, description, icon, type, active ->
+            if (editCategory != null) {
+                vm.updateCategory(editCategory.copy(name = name, description = description, icon = icon, type = type, isActive = active)) { onBack() }
+            } else {
+                vm.addCategory(name, description, icon, type, active) { onBack() }
+            }
+        },
+        onBack = onBack
+    )
+}
+
+@Composable
+fun AddCategoryScreen(
+    editCategory: CategoryModel? = null,
+    isLoading: Boolean = false,
+    onSave: (String, String, String, String, Boolean) -> Unit = { _, _, _, _, _ -> },
+    onBack: () -> Unit = {}
+) {
     val materialIcons = listOf("💊", "❤️", "🦠", "🧪", "🩹", "⚕️")
     val emojiIcons = listOf("🌿", "🩺", "🩻", "💉", "🔬", "🧬")
     val typeOptions = listOf("OTC", "Prescription", "Supplement", "Specialized")
@@ -102,15 +128,8 @@ fun AddCategoryScreen(editCategory: CategoryModel? = null) {
     var selectedType by remember { mutableStateOf(editCategory?.type ?: "OTC") }
     var isActive by remember { mutableStateOf(editCategory?.isActive ?: true) }
 
-    LaunchedEffect(message) {
-        if (!message.isNullOrBlank()) {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            vm.clearMessage()
-        }
-    }
-
     val currentIcons = if (selectedTab == 0) materialIcons else emojiIcons
-    val title = if (isEditMode) "Edit Category" else "Add Category"
+    val title = if (editCategory != null) "Edit Category" else "Add Category"
 
     Column(
         modifier = Modifier
@@ -131,7 +150,7 @@ fun AddCategoryScreen(editCategory: CategoryModel? = null) {
                 tint = Color(0xFF006B2C),
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { (context as? ComponentActivity)?.finish() }
+                    .clickable { onBack() }
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
@@ -447,7 +466,7 @@ fun AddCategoryScreen(editCategory: CategoryModel? = null) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
-                    onClick = { (context as? ComponentActivity)?.finish() },
+                    onClick = { onBack() },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -460,23 +479,7 @@ fun AddCategoryScreen(editCategory: CategoryModel? = null) {
                 }
 
                 ElevatedButton(
-                    onClick = {
-                        if (isEditMode(editCategory)) {
-                            vm.updateCategory(
-                                editCategory!!.copy(
-                                    name = categoryName,
-                                    description = description,
-                                    icon = selectedIcon,
-                                    type = selectedType,
-                                    isActive = isActive
-                                )
-                            ) { (context as? ComponentActivity)?.finish() }
-                        } else {
-                            vm.addCategory(categoryName, description, selectedIcon, selectedType, isActive) {
-                                (context as? ComponentActivity)?.finish()
-                            }
-                        }
-                    },
+                    onClick = { onSave(categoryName, description, selectedIcon, selectedType, isActive) },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.elevatedButtonColors(
@@ -498,18 +501,8 @@ fun AddCategoryScreen(editCategory: CategoryModel? = null) {
     }
 }
 
-private fun isEditMode(editCategory: CategoryModel?): Boolean = editCategory != null
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun AddCategoryPreview() {
     AddCategoryScreen()
-}
-
-@Preview(showBackground = true, showSystemUi = true, name = "Edit Mode")
-@Composable
-fun EditCategoryPreview() {
-    AddCategoryScreen(
-        editCategory = CategoryModel("1", "Antibiotics", "/slug/antibiotics", "For bacterial infections", "💊", "OTC", true, 142)
-    )
 }

@@ -1,5 +1,6 @@
 package com.example.pharmax.view
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -21,8 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -44,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -63,27 +63,16 @@ class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            SignUpScreen()
-        }
+        setContent { SignUpBody() }
     }
 }
 
 @Composable
-fun SignUpScreen() {
+fun SignUpBody() {
     val context = LocalContext.current
     val vm: UserViewModel = viewModel()
     val message by vm.message.collectAsState()
     val isLoading by vm.loading.collectAsState()
-
-    var fullName by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var agreedToTerms by remember { mutableStateOf(false) }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -92,8 +81,43 @@ fun SignUpScreen() {
         }
     }
 
-    Scaffold { paddingValues ->
+    SignUpScreen(
+        isLoading = isLoading,
+        onSignUp = { fullName, email, phone, password, confirmPassword ->
+            vm.registerUser(fullName, email, phone, password, confirmPassword) {
+                context.startActivity(Intent(context, SignInActivity::class.java))
+                (context as? Activity)?.finish()
+            }
+        },
+        onShowError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() },
+        onSignIn = { context.startActivity(Intent(context, SignInActivity::class.java)) }
+    )
+}
 
+@Composable
+fun SignUpScreen(
+    isLoading: Boolean = false,
+    onSignUp: (String, String, String, String, String) -> Unit = { _, _, _, _, _ -> },
+    onShowError: (String) -> Unit = {},
+    onSignIn: () -> Unit = {}
+) {
+    var fullName by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var agreedToTerms by remember { mutableStateOf(false) }
+    var submitted by remember { mutableStateOf(false) }
+
+    val fullNameError = submitted && fullName.isBlank()
+    val phoneError = submitted && phone.isBlank()
+    val emailError = submitted && email.isBlank()
+    val passwordError = submitted && password.isBlank()
+    val confirmPasswordError = submitted && (confirmPassword.isBlank() || confirmPassword != password)
+
+    Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -102,18 +126,16 @@ fun SignUpScreen() {
                 .verticalScroll(rememberScrollState())
         ) {
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = Color(0xFF006B2C), modifier = Modifier.size(24.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "PharmaX", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
-            }
-
             Spacer(modifier = Modifier.height(8.dp))
+
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "PharmaX Logo",
+                modifier = Modifier.size(80.dp).align(Alignment.CenterHorizontally),
+                contentScale = ContentScale.Fit
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
 
             Column(
                 modifier = Modifier
@@ -129,139 +151,58 @@ fun SignUpScreen() {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Full Name
-                Text(text = "Full Name", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                RequiredLabel("Full Name")
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = fullName, onValueChange = { fullName = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("John Doe") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = fullNameError,
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                if (fullNameError) ErrorText("Full name is required")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                RequiredLabel("Phone Number")
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = phone, onValueChange = { phone = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("+977 98XXXXXXXX") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = phoneError,
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                if (phoneError) ErrorText("Phone number is required")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                RequiredLabel("Email Address")
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = email, onValueChange = { email = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("email@example.com") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = emailError,
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                if (emailError) ErrorText("Email address is required")
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                RequiredLabel("Password")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = fullName,
-                    onValueChange = { fullName = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("John Doe") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Phone Number
-                Text(text = "Phone Number", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("+1 (555) 000-0000") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Email Address
-                Text(text = "Email Address", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("email@example.com") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password
-                Text(text = "Password", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("••••••••") },
-                    singleLine = true,
+                    value = password, onValueChange = { password = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("••••••••") }, singleLine = true, isError = passwordError,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                painter = painterResource(
-                                    id = if (passwordVisible) R.drawable.baseline_visibility_24
-                                    else R.drawable.baseline_visibility_off_24
-                                ),
-                                contentDescription = null,
-                                tint = Color(0xFF6F7A6E)
-                            )
-                        }
-                    },
+                    trailingIcon = { IconButton(onClick = { passwordVisible = !passwordVisible }) { Icon(painter = painterResource(id = if (passwordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24), contentDescription = null, tint = Color(0xFF6F7A6E)) } },
                     shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
-                    )
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White)
                 )
+                if (passwordError) ErrorText("Password is required")
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Confirm Password
-                Text(text = "Confirm Password", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                RequiredLabel("Confirm Password")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("••••••••") },
-                    singleLine = true,
+                    value = confirmPassword, onValueChange = { confirmPassword = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("••••••••") }, singleLine = true, isError = confirmPasswordError,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                            Icon(
-                                painter = painterResource(
-                                    id = if (confirmPasswordVisible) R.drawable.baseline_visibility_24
-                                    else R.drawable.baseline_visibility_off_24
-                                ),
-                                contentDescription = null,
-                                tint = Color(0xFF6F7A6E)
-                            )
-                        }
-                    },
+                    trailingIcon = { IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) { Icon(painter = painterResource(id = if (confirmPasswordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24), contentDescription = null, tint = Color(0xFF6F7A6E)) } },
                     shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
-                    )
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White)
                 )
+                if (confirmPasswordError) ErrorText(if (confirmPassword.isBlank()) "Confirm password is required" else "Passwords do not match")
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Terms checkbox
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(
-                        checked = agreedToTerms,
-                        onCheckedChange = { agreedToTerms = it },
-                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF006B2C))
-                    )
+                    Checkbox(checked = agreedToTerms, onCheckedChange = { agreedToTerms = it }, colors = CheckboxDefaults.colors(checkedColor = Color(0xFF006B2C)))
                     Text(
                         text = buildAnnotatedString {
                             append("I agree to the ")
@@ -270,8 +211,7 @@ fun SignUpScreen() {
                             withStyle(SpanStyle(color = Color(0xFF0051D5), fontWeight = FontWeight.Medium)) { append("Privacy Policy") }
                             append(".")
                         },
-                        fontSize = 13.sp,
-                        color = Color(0xFF0E1D2A)
+                        fontSize = 13.sp, color = Color(0xFF0E1D2A)
                     )
                 }
 
@@ -279,29 +219,19 @@ fun SignUpScreen() {
 
                 ElevatedButton(
                     onClick = {
-                        if (!agreedToTerms) {
-                            Toast.makeText(context, "Please agree to the Terms of Service", Toast.LENGTH_SHORT).show()
-                            return@ElevatedButton
-                        }
-                        vm.registerUser(fullName, email, phone, password, confirmPassword) {
-                            fullName = ""; phone = ""; email = ""; password = ""; confirmPassword = ""; agreedToTerms = false
-                            context.startActivity(Intent(context, SignInActivity::class.java))
-                        }
+                        submitted = true
+                        if (fullName.isBlank() || phone.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() || confirmPassword != password) return@ElevatedButton
+                        if (!agreedToTerms) { onShowError("Please agree to the Terms of Service"); return@ElevatedButton }
+                        onSignUp(fullName, email, phone, password, confirmPassword)
                     },
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.elevatedButtonColors(
-                        containerColor = Color(0xFF00501F),
-                        contentColor = Color.White
-                    ),
+                    colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF00501F), contentColor = Color.White),
                     elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp)
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
-                    } else {
-                        Text(text = "Create Account  →", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    }
+                    if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                    else Text(text = "Create Account  →", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -309,15 +239,7 @@ fun SignUpScreen() {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                     Text(text = "Already have an account?", color = Color(0xFF3F493F), fontSize = 14.sp)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Sign in",
-                        color = Color(0xFF006B2C),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        modifier = Modifier.clickable {
-                            context.startActivity(Intent(context, SignInActivity::class.java))
-                        }
-                    )
+                    Text(text = "Sign in", color = Color(0xFF006B2C), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onSignIn() })
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -334,7 +256,20 @@ fun SignUpScreen() {
     }
 }
 
-@Preview(showBackground = true)
+@Composable
+private fun RequiredLabel(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+        Text(text = " *", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFBA1A1A))
+    }
+}
+
+@Composable
+private fun ErrorText(message: String) {
+    Text(text = message, fontSize = 12.sp, color = Color(0xFFBA1A1A), modifier = Modifier.padding(top = 4.dp, start = 4.dp))
+}
+
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SignUpPreview() {
     SignUpScreen()

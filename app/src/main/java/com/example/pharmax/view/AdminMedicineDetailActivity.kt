@@ -34,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -62,14 +61,13 @@ class AdminMedicineDetailActivity : ComponentActivity() {
         )
 
         setContent {
-            AdminMedicineDetailScreen(medicine = medicine)
+            AdminMedicineDetailScreen(medicine = medicine, onBack = { finish() })
         }
     }
 }
 
 @Composable
-fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel()) {
-    val context = LocalContext.current
+fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: () -> Unit = {}) {
     val isLowStock = medicine.stock in 1..10
     val isOutOfStock = medicine.stock == 0
     val stockColor = if (isLowStock || isOutOfStock) Color(0xFFBA1A1A) else Color(0xFF006B2C)
@@ -97,7 +95,7 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel()) {
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
                 tint = Color(0xFF006B2C),
-                modifier = Modifier.size(24.dp).clickable { (context as? ComponentActivity)?.finish() }
+                modifier = Modifier.size(24.dp).clickable { onBack() }
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(

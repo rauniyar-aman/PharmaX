@@ -26,15 +26,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
@@ -55,12 +53,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.UserViewModel
 import java.util.Calendar
 
@@ -74,7 +70,6 @@ class DashboardActivity : ComponentActivity() {
     }
 }
 
-// Handles ViewModel + Firebase — called by Activity
 @Composable
 fun DashboardBody() {
     val context = LocalContext.current
@@ -104,7 +99,6 @@ fun DashboardBody() {
     DashboardScreen(firstName = user?.fullName?.split(" ")?.firstOrNull() ?: "User")
 }
 
-// Pure UI — no ViewModel, safe to preview
 @Composable
 fun DashboardScreen(firstName: String = "User") {
     val context = LocalContext.current
@@ -173,32 +167,12 @@ fun DashboardScreen(firstName: String = "User") {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                QuickChip(label = "Browse Medicines", icon = Icons.Default.Favorite) {
+                QuickChip(label = "Browse Medicines", icon = Icons.Default.Medication) {
                     Toast.makeText(context, "Medicines coming soon", Toast.LENGTH_SHORT).show()
                 }
                 QuickChip(label = "Upload Prescription", icon = Icons.Default.Add) {
                     Toast.makeText(context, "Upload Prescription coming soon", Toast.LENGTH_SHORT).show()
                 }
-                QuickChip(label = "Track Order", icon = Icons.Default.Search) {
-                    Toast.makeText(context, "Track Order coming soon", Toast.LENGTH_SHORT).show()
-                }
-                QuickChip(label = "My Wishlist", icon = Icons.Default.Star) {
-                    Toast.makeText(context, "Wishlist coming soon", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // ── Your Stats ───────────────────────────────────────────────
-            SectionHeader(title = "Your Stats")
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                StatCard(label = "Active Orders", value = "02", bgColor = Color(0xFFE8F5E9), valueColor = Color(0xFF006B2C), modifier = Modifier.weight(1f))
-                StatCard(label = "Delivered",     value = "18", bgColor = Color(0xFFE3EEFF), valueColor = Color(0xFF0051D5), modifier = Modifier.weight(1f))
-                StatCard(label = "Wishlist Items",value = "14", bgColor = Color(0xFFFFF3E0), valueColor = Color(0xFFE65100), modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -230,66 +204,6 @@ fun DashboardScreen(firstName: String = "User") {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            // ── Health Tip of the Day ────────────────────────────────────
-            SectionHeader(title = "Health Tip of the Day")
-            Spacer(modifier = Modifier.height(12.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF006B2C))
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier.size(44.dp).background(Color.White.copy(alpha = 0.2f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = Color(0xFF80DA8D), modifier = Modifier.size(22.dp))
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        text = "Stay hydrated! Drinking enough water aids digestion, improves skin vitality, and boosts your overall health.",
-                        fontSize = 13.sp,
-                        color = Color.White,
-                        lineHeight = 20.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // ── Recent Activity ──────────────────────────────────────────
-            SectionHeader(title = "Recent Activity")
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ActivityItem(
-                icon = Icons.Default.ShoppingCart,
-                iconBg = Color(0xFFE8F5E9),
-                iconTint = Color(0xFF006B2C),
-                title = "Order #1042 has been shipped",
-                timestamp = "2 hours ago"
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            ActivityItem(
-                icon = Icons.Default.CheckCircle,
-                iconBg = Color(0xFFE3EEFF),
-                iconTint = Color(0xFF0051D5),
-                title = "Prescription approved by pharmacist",
-                timestamp = "Yesterday, 4:30 PM"
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            ActivityItem(
-                icon = Icons.Default.Favorite,
-                iconBg = Color(0xFFFFF3E0),
-                iconTint = Color(0xFFE65100),
-                title = "Order #1039 delivered successfully",
-                timestamp = "2 days ago"
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -319,25 +233,6 @@ fun QuickChip(label: String, icon: ImageVector, onClick: () -> Unit) {
 }
 
 @Composable
-fun StatCard(label: String, value: String, bgColor: Color, valueColor: Color, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = value, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = valueColor)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = label, fontSize = 11.sp, color = Color(0xFF3F493F), textAlign = TextAlign.Center, lineHeight = 14.sp)
-        }
-    }
-}
-
-@Composable
 fun CategoryChip(label: String, bgColor: Color, iconTint: Color) {
     Surface(
         shape = RoundedCornerShape(50.dp),
@@ -356,34 +251,6 @@ fun CategoryChip(label: String, bgColor: Color, iconTint: Color) {
 }
 
 @Composable
-fun ActivityItem(icon: ImageVector, iconBg: Color, iconTint: Color, title: String, timestamp: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.size(40.dp).background(iconBg, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(20.dp))
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text = timestamp, fontSize = 11.sp, color = Color(0xFF6F7A6E))
-            }
-        }
-    }
-}
-
-@Composable
 fun DashboardBottomNav() {
     val context = LocalContext.current
     Row(
@@ -391,41 +258,41 @@ fun DashboardBottomNav() {
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        BottomNavItem(icon = Icons.Default.Home, label = "Home", isActive = true, onClick = {})
+        BottomNavItem(icon = Icons.Default.Medication, label = "Medicines", isActive = false) {
+            Toast.makeText(context, "Medicines coming soon", Toast.LENGTH_SHORT).show()
+        }
+        BottomNavItem(icon = Icons.Default.Description, label = "Prescriptions", isActive = false) {
+            Toast.makeText(context, "Prescriptions coming soon", Toast.LENGTH_SHORT).show()
+        }
+        BottomNavItem(icon = Icons.Default.Person, label = "Profile", isActive = false) {
+            Toast.makeText(context, "Profile coming soon", Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+@Composable
+fun BottomNavItem(icon: ImageVector, label: String, isActive: Boolean, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { onClick() }
+    ) {
+        if (isActive) {
             Box(
                 modifier = Modifier.size(36.dp).background(Color(0xFF00501F), RoundedCornerShape(50.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = Icons.Default.Home, contentDescription = "Home", tint = Color.White, modifier = Modifier.size(20.dp))
+                Icon(imageVector = icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(20.dp))
             }
-            Text(text = "Home", fontSize = 10.sp, color = Color(0xFF00501F), fontWeight = FontWeight.SemiBold)
+        } else {
+            Icon(imageVector = icon, contentDescription = label, tint = Color(0xFF6F7A6E), modifier = Modifier.size(24.dp))
         }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { Toast.makeText(context, "Medicines coming soon", Toast.LENGTH_SHORT).show() }) {
-            Icon(imageVector = Icons.Default.Favorite, contentDescription = "Medicines", tint = Color(0xFF6F7A6E), modifier = Modifier.size(24.dp))
-            Text(text = "Medicines", fontSize = 10.sp, color = Color(0xFF6F7A6E))
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { Toast.makeText(context, "Cart coming soon", Toast.LENGTH_SHORT).show() }) {
-            BadgedBox(badge = {
-                Badge(containerColor = Color(0xFF00501F)) {
-                    Text(text = "2", fontSize = 9.sp, color = Color.White)
-                }
-            }) {
-                Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "Cart", tint = Color(0xFF6F7A6E), modifier = Modifier.size(24.dp))
-            }
-            Text(text = "Cart", fontSize = 10.sp, color = Color(0xFF6F7A6E))
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { Toast.makeText(context, "Orders coming soon", Toast.LENGTH_SHORT).show() }) {
-            Icon(imageVector = Icons.Default.List, contentDescription = "Orders", tint = Color(0xFF6F7A6E), modifier = Modifier.size(24.dp))
-            Text(text = "Orders", fontSize = 10.sp, color = Color(0xFF6F7A6E))
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { Toast.makeText(context, "Profile coming soon", Toast.LENGTH_SHORT).show() }) {
-            Icon(imageVector = Icons.Default.Person, contentDescription = "Profile", tint = Color(0xFF6F7A6E), modifier = Modifier.size(24.dp))
-            Text(text = "Profile", fontSize = 10.sp, color = Color(0xFF6F7A6E))
-        }
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            color = if (isActive) Color(0xFF00501F) else Color(0xFF6F7A6E),
+            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal
+        )
     }
 }
 

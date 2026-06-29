@@ -29,6 +29,10 @@ interface UserRepo {
 
     fun rollbackCurrentUserRegistration()
 
+    fun sendVerificationEmail(callback: (Boolean, String) -> Unit)
+
+    fun signOutSilently()
+
     fun getCurrentUser(callback: (Boolean, UserModel?) -> Unit)
 
     fun logOut(callback: (Boolean, String) -> Unit)

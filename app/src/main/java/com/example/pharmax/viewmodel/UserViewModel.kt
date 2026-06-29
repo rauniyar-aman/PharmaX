@@ -82,12 +82,15 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
                     role = "user"
                 )
                 repo.addUser(uid, user) { addSuccess, addMessage ->
-                    _loading.value = false
                     if (addSuccess) {
-                        _message.value = "Signup Successful"
+                        repo.sendVerificationEmail { _, _ -> }
+                        repo.signOutSilently()
+                        _loading.value = false
+                        _message.value = "Account created! Please verify your email before signing in."
                         onSuccess()
                     } else {
                         repo.rollbackCurrentUserRegistration()
+                        _loading.value = false
                         _message.value = addMessage
                     }
                 }

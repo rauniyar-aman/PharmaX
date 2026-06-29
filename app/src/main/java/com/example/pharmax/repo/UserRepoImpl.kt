@@ -44,6 +44,12 @@ class UserRepoImpl : UserRepo {
                     return@addOnSuccessListener
                 }
 
+                if (auth.currentUser?.isEmailVerified == false) {
+                    auth.signOut()
+                    callback(false, "Please verify your email before signing in. Check your inbox.", null)
+                    return@addOnSuccessListener
+                }
+
                 ref.child(uid).addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         if (snapshot.exists()) {
@@ -99,6 +105,18 @@ class UserRepoImpl : UserRepo {
 
     override fun rollbackCurrentUserRegistration() {
         auth.currentUser?.delete()
+        auth.signOut()
+    }
+
+    override fun sendVerificationEmail(callback: (Boolean, String) -> Unit) {
+        auth.currentUser?.sendEmailVerification()
+            ?.addOnCompleteListener { task ->
+                if (task.isSuccessful) callback(true, "Verification email sent")
+                else callback(false, task.exception?.message ?: "Failed to send verification email")
+            } ?: callback(false, "No user found")
+    }
+
+    override fun signOutSilently() {
         auth.signOut()
     }
 

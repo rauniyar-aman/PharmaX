@@ -66,6 +66,11 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
             return
         }
 
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _message.value = "Please enter a valid email address"
+            return
+        }
+
         if (password != confirmPassword) {
             _message.value = "Passwords do not match"
             return
@@ -86,7 +91,7 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
                         repo.sendVerificationEmail { _, _ -> }
                         repo.signOutSilently()
                         _loading.value = false
-                        _message.value = "Account created! Please verify your email before signing in."
+                        _message.value = "Account created! Check your inbox (or spam folder) to verify your email."
                         onSuccess()
                     } else {
                         repo.rollbackCurrentUserRegistration()

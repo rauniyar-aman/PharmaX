@@ -113,7 +113,7 @@ fun SignUpScreen(
 
     val fullNameError = submitted && fullName.isBlank()
     val phoneError = submitted && phone.isBlank()
-    val emailError = submitted && email.isBlank()
+    val emailError = submitted && (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())
     val passwordError = submitted && password.isBlank()
     val confirmPasswordError = submitted && (confirmPassword.isBlank() || confirmPassword != password)
 
@@ -171,7 +171,7 @@ fun SignUpScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = email, onValueChange = { email = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("email@example.com") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = emailError,
                     colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
-                if (emailError) ErrorText("Email address is required")
+                if (emailError) ErrorText(if (email.isBlank()) "Email address is required" else "Please enter a valid email address")
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -220,7 +220,8 @@ fun SignUpScreen(
                 ElevatedButton(
                     onClick = {
                         submitted = true
-                        if (fullName.isBlank() || phone.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() || confirmPassword != password) return@ElevatedButton
+                        val emailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                        if (fullName.isBlank() || phone.isBlank() || email.isBlank() || !emailValid || password.isBlank() || confirmPassword.isBlank() || confirmPassword != password) return@ElevatedButton
                         if (!agreedToTerms) { onShowError("Please agree to the Terms of Service"); return@ElevatedButton }
                         onSignUp(fullName, email, phone, password, confirmPassword)
                     },

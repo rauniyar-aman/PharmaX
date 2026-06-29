@@ -84,7 +84,8 @@ fun SignInBody() {
 
     LaunchedEffect(user) {
         user?.let {
-            context.startActivity(Intent(context, DashboardActivity::class.java))
+            val destination = if (it.role == "admin") AdminDashboardActivity::class.java else DashboardActivity::class.java
+            context.startActivity(Intent(context, destination))
             (context as? Activity)?.finish()
         }
     }

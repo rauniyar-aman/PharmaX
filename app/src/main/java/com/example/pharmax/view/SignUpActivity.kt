@@ -168,7 +168,7 @@ fun SignUpScreen(
                     value = phone,
                     onValueChange = { if (it.length <= 10 && it.all { c -> c.isDigit() }) phone = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("9XXXXXXXX") },
+                    placeholder = { Text("9XXXXXXXXX") },
                     prefix = { Text("+977 ", color = Color(0xFF0E1D2A), fontWeight = FontWeight.Medium) },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),

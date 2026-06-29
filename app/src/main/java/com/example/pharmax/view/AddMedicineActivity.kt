@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.MedicineModel
+import com.example.pharmax.viewmodel.CategoryViewModel
 import com.example.pharmax.viewmodel.MedicineViewModel
 
 class AddMedicineActivity : ComponentActivity() {
@@ -95,9 +96,13 @@ class AddMedicineActivity : ComponentActivity() {
 fun AddMedicineBody(editMedicine: MedicineModel? = null) {
     val context = LocalContext.current
     val vm: MedicineViewModel = viewModel()
+    val categoryVm: CategoryViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val isLoading by vm.loading.collectAsState()
+    val categories by categoryVm.categories.collectAsState()
+
+    LaunchedEffect(Unit) { categoryVm.loadCategories() }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -109,6 +114,7 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
     AddMedicineScreen(
         editMedicine = editMedicine,
         isLoading = isLoading,
+        categoryNames = categories.filter { it.isActive }.map { it.name },
         onSave = { model ->
             if (editMedicine != null) {
                 vm.updateMedicine(model) { (context as? ComponentActivity)?.finish() }
@@ -125,11 +131,12 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
 fun AddMedicineScreen(
     editMedicine: MedicineModel? = null,
     isLoading: Boolean = false,
+    categoryNames: List<String> = listOf("Pain Relief", "Antibiotics", "Vitamins", "Supplements", "Skincare", "Diabetes"),
     onSave: (MedicineModel) -> Unit = {},
     onCancel: () -> Unit = {}
 ) {
     val isEditMode = editMedicine != null
-    val categories = listOf("Pain Relief", "Antibiotics", "Vitamins", "Supplements", "Skincare", "Diabetes", "Heart Health", "Devices")
+    val categories = categoryNames
 
     var name by remember { mutableStateOf(editMedicine?.name ?: "") }
     var brand by remember { mutableStateOf(editMedicine?.brand ?: "") }

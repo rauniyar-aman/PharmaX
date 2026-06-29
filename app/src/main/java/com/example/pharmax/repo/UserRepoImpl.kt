@@ -1,6 +1,7 @@
 package com.example.pharmax.repo
 
 import com.example.pharmax.model.UserModel
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -170,5 +171,31 @@ class UserRepoImpl : UserRepo {
         } catch (e: Exception) {
             callback(false, e.toString())
         }
+    }
+
+    override fun updateUserProfile(uid: String, name: String, phone: String, callback: (Boolean, String) -> Unit) {
+        val updates = mapOf("fullName" to name, "phone" to phone)
+        ref.child(uid).updateChildren(updates)
+            .addOnSuccessListener { callback(true, "Profile updated successfully") }
+            .addOnFailureListener { callback(false, it.message ?: "Failed to update profile") }
+    }
+
+    override fun updateProfileImage(uid: String, imageUrl: String, callback: (Boolean, String) -> Unit) {
+        ref.child(uid).child("profileImageUrl").setValue(imageUrl)
+            .addOnSuccessListener { callback(true, "Profile picture updated") }
+            .addOnFailureListener { callback(false, it.message ?: "Failed to update profile picture") }
+    }
+
+    override fun changePassword(email: String, currentPassword: String, newPassword: String, callback: (Boolean, String) -> Unit) {
+        val user = auth.currentUser
+        if (user == null) { callback(false, "No user signed in"); return }
+        val credential = EmailAuthProvider.getCredential(email, currentPassword)
+        user.reauthenticate(credential)
+            .addOnSuccessListener {
+                user.updatePassword(newPassword)
+                    .addOnSuccessListener { callback(true, "Password changed successfully") }
+                    .addOnFailureListener { callback(false, it.message ?: "Failed to change password") }
+            }
+            .addOnFailureListener { callback(false, "Current password is incorrect") }
     }
 }

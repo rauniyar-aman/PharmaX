@@ -40,4 +40,10 @@ interface UserRepo {
     fun getCurrentUser(callback: (Boolean, UserModel?) -> Unit)
 
     fun logOut(callback: (Boolean, String) -> Unit)
+
+    fun updateUserProfile(uid: String, name: String, phone: String, callback: (Boolean, String) -> Unit)
+
+    fun updateProfileImage(uid: String, imageUrl: String, callback: (Boolean, String) -> Unit)
+
+    fun changePassword(email: String, currentPassword: String, newPassword: String, callback: (Boolean, String) -> Unit)
 }

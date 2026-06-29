@@ -159,4 +159,54 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
             }
         }
     }
+
+    fun updateProfileImage(imageUrl: String) {
+        val uid = _user.value?.uid ?: return
+        _loading.value = true
+        repo.updateProfileImage(uid, imageUrl) { success, msg ->
+            _loading.value = false
+            _message.value = msg
+            if (success) {
+                _user.value = _user.value?.copy(profileImageUrl = imageUrl)
+            }
+        }
+    }
+
+    fun updateProfile(name: String, phone: String) {
+        val uid = _user.value?.uid ?: return
+        if (name.isBlank() || phone.isBlank()) {
+            _message.value = "Name and phone cannot be empty"
+            return
+        }
+        _loading.value = true
+        val fullPhone = if (phone.startsWith("+977")) phone else "+977$phone"
+        repo.updateUserProfile(uid, name, fullPhone) { success, msg ->
+            _loading.value = false
+            _message.value = msg
+            if (success) {
+                _user.value = _user.value?.copy(fullName = name, phone = fullPhone)
+            }
+        }
+    }
+
+    fun changePassword(currentPassword: String, newPassword: String, confirmPassword: String) {
+        val email = _user.value?.email ?: ""
+        if (currentPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank()) {
+            _message.value = "Please fill all fields"
+            return
+        }
+        if (newPassword != confirmPassword) {
+            _message.value = "New passwords do not match"
+            return
+        }
+        if (newPassword.length < 6) {
+            _message.value = "Password must be at least 6 characters"
+            return
+        }
+        _loading.value = true
+        repo.changePassword(email, currentPassword, newPassword) { success, msg ->
+            _loading.value = false
+            _message.value = msg
+        }
+    }
 }

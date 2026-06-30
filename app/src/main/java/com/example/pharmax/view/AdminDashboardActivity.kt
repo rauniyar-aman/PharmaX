@@ -82,8 +82,12 @@ fun AdminDashboardBody() {
     val message by vm.message.collectAsState()
     val medicines by vm.medicines.collectAsState()
     val isLoggedOut by userVm.isLoggedOut.collectAsState()
+    val adminUser by userVm.user.collectAsState()
 
-    LaunchedEffect(Unit) { vm.loadMedicines() }
+    LaunchedEffect(Unit) {
+        vm.loadMedicines()
+        userVm.loadCurrentUser()
+    }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -103,8 +107,11 @@ fun AdminDashboardBody() {
     val lowStockMedicines = medicines.filter { it.stock in 0..10 }
 
     AdminDashboardScreen(
+        adminName = adminUser?.fullName ?: "Admin",
+        adminEmail = adminUser?.email ?: "",
         lowStockMedicines = lowStockMedicines,
         lowStockCount = lowStockMedicines.size,
+        totalMedicineCount = medicines.size,
         onAddMedicine = { context.startActivity(Intent(context, AddMedicineActivity::class.java)) },
         onAddCategory = { context.startActivity(Intent(context, AddCategoryActivity::class.java)) },
         onNavigateMedicines = { context.startActivity(Intent(context, AdminMedicineManagement::class.java)) },
@@ -115,8 +122,11 @@ fun AdminDashboardBody() {
 
 @Composable
 fun AdminDashboardScreen(
+    adminName: String = "Admin",
+    adminEmail: String = "",
     lowStockMedicines: List<MedicineModel> = emptyList(),
     lowStockCount: Int = 0,
+    totalMedicineCount: Int = 0,
     onAddMedicine: () -> Unit = {},
     onAddCategory: () -> Unit = {},
     onNavigateMedicines: () -> Unit = {},
@@ -130,6 +140,8 @@ fun AdminDashboardScreen(
         drawerState = drawerState,
         drawerContent = {
             AdminSideDrawer(
+                adminName = adminName,
+                adminEmail = adminEmail,
                 onClose = { scope.launch { drawerState.close() } },
                 onNavigateMedicines = { scope.launch { drawerState.close() }; onNavigateMedicines() },
                 onNavigateCategories = { scope.launch { drawerState.close() }; onNavigateCategories() },
@@ -176,7 +188,7 @@ fun AdminDashboardScreen(
                     modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
 
@@ -191,8 +203,8 @@ fun AdminDashboardScreen(
                 // ── 2 Stat cards ──────────────────────────────────────────
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AdminStatDashCard(
-                        label = "Pending Prescriptions",
-                        value = "14",
+                        label = "Total Medicines",
+                        value = "$totalMedicineCount",
                         color = Color(0xFFE65100),
                         bgColor = Color(0xFFFFF3E0),
                         modifier = Modifier.weight(1f)
@@ -204,25 +216,6 @@ fun AdminDashboardScreen(
                         bgColor = Color(0xFFFFEDED),
                         modifier = Modifier.weight(1f)
                     )
-                }
-
-                // ── Prescriptions Awaiting Verification ───────────────────
-                AdminSectionHeader(title = "Prescriptions Awaiting Verification")
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column {
-                        listOf(
-                            "Bikash Gurung" to "2 mins ago",
-                            "Sunita Poudel" to "15 mins ago",
-                            "Manoj Shrestha" to "1 hr ago"
-                        ).forEachIndexed { index, (name, time) ->
-                            PrescriptionRow(customerName = name, uploadTime = time)
-                            if (index < 2) HorizontalDivider(color = Color(0xFFF1F4F8))
-                        }
-                    }
                 }
 
                 // ── Low Stock Medicines ───────────────────────────────────
@@ -286,6 +279,8 @@ fun AdminDashboardScreen(
 // ── Sidebar Drawer ────────────────────────────────────────────────────────────
 @Composable
 fun AdminSideDrawer(
+    adminName: String = "Admin",
+    adminEmail: String = "",
     onClose: () -> Unit = {},
     onNavigateMedicines: () -> Unit = {},
     onNavigateCategories: () -> Unit = {},
@@ -316,12 +311,12 @@ fun AdminSideDrawer(
                 modifier = Modifier.size(40.dp).background(Color(0xFF006B2C), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "A", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(text = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Admin", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
-                Text(text = "admin@pharmax.com", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                Text(text = adminName, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
+                Text(text = adminEmail, fontSize = 12.sp, color = Color(0xFF6F7A6E))
             }
             Icon(
                 imageVector = Icons.Default.Close,
@@ -421,34 +416,6 @@ fun AdminStatDashCard(label: String, value: String, color: Color, bgColor: Color
 @Composable
 fun AdminSectionHeader(title: String) {
     Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
-}
-
-@Composable
-fun PrescriptionRow(customerName: String, uploadTime: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(36.dp).background(Color(0xFFE3EFFF), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = customerName.first().uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0051D5))
-        }
-        Spacer(modifier = Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = customerName, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
-            Text(text = "Uploaded $uploadTime", fontSize = 12.sp, color = Color(0xFF6F7A6E))
-        }
-        Box(
-            modifier = Modifier
-                .background(Color(0xFFE8F5E9), RoundedCornerShape(50.dp))
-                .clickable { }
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(text = "Review", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF006B2C))
-        }
-    }
 }
 
 @Composable

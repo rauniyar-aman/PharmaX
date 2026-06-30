@@ -33,8 +33,6 @@ import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -57,6 +55,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.viewmodel.CategoryViewModel
 import com.example.pharmax.viewmodel.UserViewModel
 import java.util.Calendar
 
@@ -74,12 +74,17 @@ class DashboardActivity : ComponentActivity() {
 fun DashboardBody() {
     val context = LocalContext.current
     val vm: UserViewModel = viewModel()
+    val categoryVm: CategoryViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val user by vm.user.collectAsState()
     val isLoggedOut by vm.isLoggedOut.collectAsState()
+    val categories by categoryVm.categories.collectAsState()
 
-    LaunchedEffect(Unit) { vm.loadCurrentUser() }
+    LaunchedEffect(Unit) {
+        vm.loadCurrentUser()
+        categoryVm.loadCategories()
+    }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -96,11 +101,14 @@ fun DashboardBody() {
         }
     }
 
-    DashboardScreen(firstName = user?.fullName?.split(" ")?.firstOrNull() ?: "User")
+    DashboardScreen(
+        firstName = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
+        categories = categories.filter { it.isActive }
+    )
 }
 
 @Composable
-fun DashboardScreen(firstName: String = "User") {
+fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> = emptyList()) {
     val context = LocalContext.current
 
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -134,13 +142,7 @@ fun DashboardScreen(firstName: String = "User") {
                     Text(text = "$greeting, $firstName", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
                     Text(text = "Your health is our priority today.", fontSize = 13.sp, color = Color(0xFF3F493F))
                 }
-                BadgedBox(badge = {
-                    Badge(containerColor = Color.Red) {
-                        Text(text = "3", fontSize = 10.sp, color = Color.White)
-                    }
-                }) {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications", tint = Color(0xFF0E1D2A), modifier = Modifier.size(26.dp))
-                }
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications", tint = Color(0xFF0E1D2A), modifier = Modifier.size(26.dp))
             }
 
             // ── Search bar ───────────────────────────────────────────────
@@ -183,25 +185,43 @@ fun DashboardScreen(firstName: String = "User") {
             // ── Shop by Category ─────────────────────────────────────────
             SectionHeader(title = "Shop by Category")
             Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                CategoryChip(label = "Pain Relief",  bgColor = Color(0xFFFFE0E0), iconTint = Color(0xFFD32F2F))
-                CategoryChip(label = "Vitamins",     bgColor = Color(0xFFFFF9C4), iconTint = Color(0xFFF9A825))
-                CategoryChip(label = "Antibiotics",  bgColor = Color(0xFFE8F5E9), iconTint = Color(0xFF388E3C))
-                CategoryChip(label = "Skincare",     bgColor = Color(0xFFFCE4EC), iconTint = Color(0xFFC2185B))
-                CategoryChip(label = "Diabetes",     bgColor = Color(0xFFE3F2FD), iconTint = Color(0xFF1565C0))
-                CategoryChip(label = "Heart Health", bgColor = Color(0xFFF3E5F5), iconTint = Color(0xFF7B1FA2))
-                Surface(
-                    shape = RoundedCornerShape(50.dp),
-                    color = Color(0xFF00501F),
-                    modifier = Modifier.height(36.dp).clickable {
-                        context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
-                    }
+            if (categories.isEmpty()) {
+                Text(
+                    text = "No categories available yet",
+                    fontSize = 13.sp,
+                    color = Color(0xFF6F7A6E),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(text = "See All →", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+                    categories.take(6).forEach { category ->
+                        CategoryChip(
+                            label = category.name,
+                            icon = category.icon,
+                            bgColor = categoryBgColor(category.type),
+                            iconTint = categoryIconColor(category.type),
+                            onClick = {
+                                val intent = Intent(context, MedicineListActivity::class.java)
+                                intent.putExtra("categoryId", category.categoryId)
+                                intent.putExtra("categoryName", category.name)
+                                intent.putExtra("categoryIcon", category.icon)
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(50.dp),
+                        color = Color(0xFF00501F),
+                        modifier = Modifier.height(36.dp).clickable {
+                            context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 16.dp)) {
+                            Text(text = "See All →", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
@@ -236,21 +256,35 @@ fun QuickChip(label: String, icon: ImageVector, onClick: () -> Unit) {
 }
 
 @Composable
-fun CategoryChip(label: String, bgColor: Color, iconTint: Color) {
+fun CategoryChip(label: String, icon: String, bgColor: Color, iconTint: Color, onClick: () -> Unit = {}) {
     Surface(
         shape = RoundedCornerShape(50.dp),
         color = bgColor,
-        modifier = Modifier.height(36.dp).clickable { }
+        modifier = Modifier.height(36.dp).clickable { onClick() }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = iconTint, modifier = Modifier.size(14.dp))
+            Text(text = icon, fontSize = 14.sp)
             Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
         }
     }
+}
+
+fun categoryBgColor(type: String): Color = when (type) {
+    "Prescription" -> Color(0xFFFFEDED)
+    "Supplement"   -> Color(0xFFFFF9C4)
+    "Specialized"  -> Color(0xFFE3EFFF)
+    else           -> Color(0xFFE8F5E9)
+}
+
+fun categoryIconColor(type: String): Color = when (type) {
+    "Prescription" -> Color(0xFFBA1A1A)
+    "Supplement"   -> Color(0xFFF9A825)
+    "Specialized"  -> Color(0xFF0051D5)
+    else           -> Color(0xFF006B2C)
 }
 
 @Composable

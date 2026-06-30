@@ -8,8 +8,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,9 +90,12 @@ fun ProfileBody() {
 
     val user by vm.user.collectAsState()
     val isLoggedOut by vm.isLoggedOut.collectAsState()
-    val isLoading by vm.loading.collectAsState()
+    val isSaving by vm.loading.collectAsState()
     val isUploading by imageVm.isUploading.collectAsState()
     val message by vm.message.collectAsState()
+
+    val prefs = context.getSharedPreferences("pharmax_prefs", android.content.Context.MODE_PRIVATE)
+    val initialDarkMode = prefs.getBoolean("dark_mode", false)
 
     LaunchedEffect(Unit) { vm.loadCurrentUser() }
 
@@ -122,10 +127,18 @@ fun ProfileBody() {
         email = user?.email ?: "",
         phone = user?.phone ?: "",
         profileImageUrl = user?.profileImageUrl ?: "",
-        isLoading = isLoading || isUploading,
+        isSaving = isSaving,
+        isUploading = isUploading,
+        initialDarkMode = initialDarkMode,
         onPickImage = { imageLauncher.launch("image/*") },
         onSaveProfile = { name, phone -> vm.updateProfile(name, phone) },
         onChangePassword = { current, new, confirm -> vm.changePassword(current, new, confirm) },
+        onDarkModeToggle = { isDark ->
+            prefs.edit().putBoolean("dark_mode", isDark).apply()
+            AppCompatDelegate.setDefaultNightMode(
+                if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            )
+        },
         onLogout = { vm.logOut() }
     )
 }
@@ -136,21 +149,24 @@ fun ProfileScreen(
     email: String = "",
     phone: String = "",
     profileImageUrl: String = "",
-    isLoading: Boolean = false,
+    isSaving: Boolean = false,
+    isUploading: Boolean = false,
+    initialDarkMode: Boolean = false,
     onPickImage: () -> Unit = {},
     onSaveProfile: (String, String) -> Unit = { _, _ -> },
     onChangePassword: (String, String, String) -> Unit = { _, _, _ -> },
+    onDarkModeToggle: (Boolean) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
-    var isDarkMode by remember { mutableStateOf(false) }
+    var isDarkMode by remember { mutableStateOf(initialDarkMode) }
 
     if (showEditDialog) {
         EditProfileDialog(
             currentName = fullName,
             currentPhone = phone.removePrefix("+977"),
-            isLoading = isLoading,
+            isLoading = isSaving,
             onSave = { name, phone ->
                 onSaveProfile(name, phone)
                 showEditDialog = false
@@ -161,7 +177,7 @@ fun ProfileScreen(
 
     if (showPasswordDialog) {
         ChangePasswordDialog(
-            isLoading = isLoading,
+            isLoading = isSaving,
             onSave = { current, new, confirm ->
                 onChangePassword(current, new, confirm)
                 showPasswordDialog = false
@@ -201,7 +217,7 @@ fun ProfileScreen(
                             AsyncImage(
                                 model = profileImageUrl,
                                 contentDescription = "Profile Picture",
-                                modifier = Modifier.size(90.dp).background(Color(0xFF006B2C), CircleShape),
+                                modifier = Modifier.size(90.dp).clip(CircleShape),
                                 contentScale = ContentScale.Crop
                             )
                         } else if (fullName.isNotBlank()) {
@@ -214,7 +230,7 @@ fun ProfileScreen(
                         } else {
                             Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = Color.White, modifier = Modifier.size(40.dp))
                         }
-                        if (isLoading) {
+                        if (isUploading) {
                             Box(
                                 modifier = Modifier.size(90.dp).background(Color.Black.copy(alpha = 0.4f), CircleShape),
                                 contentAlignment = Alignment.Center
@@ -311,7 +327,7 @@ fun ProfileScreen(
                     Text(text = "Dark Mode", fontSize = 15.sp, color = Color(0xFF0E1D2A), modifier = Modifier.weight(1f))
                     Switch(
                         checked = isDarkMode,
-                        onCheckedChange = { isDarkMode = it },
+                        onCheckedChange = { isDarkMode = it; onDarkModeToggle(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFF006B2C),
@@ -332,8 +348,7 @@ fun ProfileScreen(
                 colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFFBA1A1A), contentColor = Color.White),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 4.dp)
             ) {
-                if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
-                else Text(text = "Logout", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(text = "Logout", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))

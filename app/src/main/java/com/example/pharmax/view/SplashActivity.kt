@@ -22,6 +22,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,7 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.R
+import com.example.pharmax.viewmodel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 
@@ -40,30 +44,55 @@ class SplashActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SplashBody(onNavigateDashboard = {
-                startActivity(Intent(this, DashboardActivity::class.java))
-                finish()
-            }, onNavigateSignIn = {
-                startActivity(Intent(this, SignInActivity::class.java))
-                finish()
-            })
+            SplashBody(
+                onNavigateUserDashboard = {
+                    startActivity(Intent(this, DashboardActivity::class.java))
+                    finish()
+                },
+                onNavigateAdminDashboard = {
+                    startActivity(Intent(this, AdminDashboardActivity::class.java))
+                    finish()
+                },
+                onNavigateSignIn = {
+                    startActivity(Intent(this, SignInActivity::class.java))
+                    finish()
+                }
+            )
         }
     }
 }
 
 @Composable
-fun SplashBody(onNavigateDashboard: () -> Unit = {}, onNavigateSignIn: () -> Unit = {}) {
+fun SplashBody(
+    onNavigateUserDashboard: () -> Unit = {},
+    onNavigateAdminDashboard: () -> Unit = {},
+    onNavigateSignIn: () -> Unit = {}
+) {
+    val vm: UserViewModel = viewModel()
+    val user by vm.user.collectAsState()
+
     LaunchedEffect(Unit) {
         delay(3000)
         val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) onNavigateDashboard() else onNavigateSignIn()
+        if (currentUser != null) {
+            vm.loadCurrentUser()
+        } else {
+            onNavigateSignIn()
+        }
     }
+
+    LaunchedEffect(user) {
+        user?.let {
+            if (it.role == "admin") onNavigateAdminDashboard() else onNavigateUserDashboard()
+        }
+    }
+
     SplashScreen()
 }
 
 @Composable
 fun SplashScreen() {
-    Box(
+       Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF006B2C)),

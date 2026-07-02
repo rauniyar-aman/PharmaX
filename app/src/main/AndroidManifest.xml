@@ -120,6 +120,17 @@
             android:exported="true"
             android:theme="@style/Theme.PharmaX" />
 
+        <!-- Admin Prescription Screens -->
+        <activity
+            android:name=".view.AdminPrescriptionManagement"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
+        <activity
+            android:name=".view.AdminPrescriptionDetailActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PharmaX" />
+
     </application>
 
 </manifest>

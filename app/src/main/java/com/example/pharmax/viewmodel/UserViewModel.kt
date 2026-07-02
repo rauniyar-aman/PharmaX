@@ -172,6 +172,18 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
         }
     }
 
+    fun removeProfileImage() {
+        val uid = _user.value?.uid ?: return
+        _loading.value = true
+        repo.updateProfileImage(uid, "") { success, msg ->
+            _loading.value = false
+            _message.value = msg
+            if (success) {
+                _user.value = _user.value?.copy(profileImageUrl = "")
+            }
+        }
+    }
+
     fun updateProfile(name: String, phone: String) {
         val uid = _user.value?.uid ?: return
         if (name.isBlank() || phone.isBlank()) {

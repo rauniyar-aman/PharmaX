@@ -41,6 +41,7 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -70,6 +71,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.R
+import com.example.pharmax.ui.theme.AppThemeState
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.ImageViewModel
 import com.example.pharmax.viewmodel.UserViewModel
 import coil.compose.AsyncImage
@@ -78,7 +81,7 @@ class ProfileActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { ProfileBody() }
+        setContent { PharmaXTheme { ProfileBody() } }
     }
 }
 
@@ -93,9 +96,10 @@ fun ProfileBody() {
     val isSaving by vm.loading.collectAsState()
     val isUploading by imageVm.isUploading.collectAsState()
     val message by vm.message.collectAsState()
+    val imageMessage by imageVm.message.collectAsState()
 
     val prefs = context.getSharedPreferences("pharmax_prefs", android.content.Context.MODE_PRIVATE)
-    val initialDarkMode = prefs.getBoolean("dark_mode", false)
+    val initialDarkMode = AppThemeState.isDarkMode.value
 
     LaunchedEffect(Unit) { vm.loadCurrentUser() }
 
@@ -103,6 +107,13 @@ fun ProfileBody() {
         if (!message.isNullOrBlank()) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             vm.clearMessage()
+        }
+    }
+
+    LaunchedEffect(imageMessage) {
+        if (!imageMessage.isNullOrBlank()) {
+            Toast.makeText(context, imageMessage, Toast.LENGTH_LONG).show()
+            imageVm.clearMessage()
         }
     }
 
@@ -131,10 +142,12 @@ fun ProfileBody() {
         isUploading = isUploading,
         initialDarkMode = initialDarkMode,
         onPickImage = { imageLauncher.launch("image/*") },
+        onRemoveImage = { vm.removeProfileImage() },
         onSaveProfile = { name, phone -> vm.updateProfile(name, phone) },
         onChangePassword = { current, new, confirm -> vm.changePassword(current, new, confirm) },
         onDarkModeToggle = { isDark ->
             prefs.edit().putBoolean("dark_mode", isDark).apply()
+            AppThemeState.isDarkMode.value = isDark
             AppCompatDelegate.setDefaultNightMode(
                 if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
             )
@@ -153,6 +166,7 @@ fun ProfileScreen(
     isUploading: Boolean = false,
     initialDarkMode: Boolean = false,
     onPickImage: () -> Unit = {},
+    onRemoveImage: () -> Unit = {},
     onSaveProfile: (String, String) -> Unit = { _, _ -> },
     onChangePassword: (String, String, String) -> Unit = { _, _, _ -> },
     onDarkModeToggle: (Boolean) -> Unit = {},
@@ -160,6 +174,7 @@ fun ProfileScreen(
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
+    var showPhotoOptions by remember { mutableStateOf(false) }
     var isDarkMode by remember { mutableStateOf(initialDarkMode) }
 
     if (showEditDialog) {
@@ -186,13 +201,28 @@ fun ProfileScreen(
         )
     }
 
+    if (showPhotoOptions) {
+        PhotoOptionsDialog(
+            hasImage = profileImageUrl.isNotBlank(),
+            onChangePhoto = {
+                showPhotoOptions = false
+                onPickImage()
+            },
+            onRemovePhoto = {
+                showPhotoOptions = false
+                onRemoveImage()
+            },
+            onDismiss = { showPhotoOptions = false }
+        )
+    }
+
     Scaffold(
         bottomBar = { DashboardBottomNav(activeTab = "Profile") }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -201,7 +231,7 @@ fun ProfileScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(vertical = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -210,7 +240,7 @@ fun ProfileScreen(
                         modifier = Modifier
                             .size(90.dp)
                             .background(Color(0xFF006B2C), CircleShape)
-                            .clickable { onPickImage() },
+                            .clickable { showPhotoOptions = true },
                         contentAlignment = Alignment.Center
                     ) {
                         if (profileImageUrl.isNotBlank()) {
@@ -243,7 +273,7 @@ fun ProfileScreen(
                         modifier = Modifier
                             .size(28.dp)
                             .background(Color(0xFF0051D5), CircleShape)
-                            .clickable { onPickImage() },
+                            .clickable { showPhotoOptions = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = "Change Photo", tint = Color.White, modifier = Modifier.size(14.dp))
@@ -251,9 +281,9 @@ fun ProfileScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = fullName.ifBlank { "User" }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
+                Text(text = fullName.ifBlank { "User" }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(text = email, fontSize = 13.sp, color = Color(0xFF6F7A6E))
+                Text(text = email, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -263,14 +293,14 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     ProfileInfoRow(label = "Full Name", value = fullName.ifBlank { "—" })
-                    HorizontalDivider(color = Color(0xFFF1F4F8))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     ProfileInfoRow(label = "Email", value = email.ifBlank { "—" })
-                    HorizontalDivider(color = Color(0xFFF1F4F8))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     ProfileInfoRow(label = "Phone", value = phone.ifBlank { "—" })
                 }
             }
@@ -281,7 +311,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 ProfileActionRow(
@@ -299,7 +329,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 ProfileActionRow(
@@ -317,14 +347,14 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Dark Mode", fontSize = 15.sp, color = Color(0xFF0E1D2A), modifier = Modifier.weight(1f))
+                    Text(text = "Dark Mode", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                     Switch(
                         checked = isDarkMode,
                         onCheckedChange = { isDarkMode = it; onDarkModeToggle(it) },
@@ -332,7 +362,7 @@ fun ProfileScreen(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFF006B2C),
                             uncheckedThumbColor = Color.White,
-                            uncheckedTrackColor = Color(0xFF6F7A6E)
+                            uncheckedTrackColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }
@@ -345,7 +375,7 @@ fun ProfileScreen(
                 onClick = onLogout,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp),
                 shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFFBA1A1A), contentColor = Color.White),
+                colors = ButtonDefaults.elevatedButtonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = Color.White),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 4.dp)
             ) {
                 Text(text = "Logout", fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -370,7 +400,7 @@ private fun EditProfileDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Edit Profile", fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A)) },
+        title = { Text(text = "Edit Profile", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -381,26 +411,26 @@ private fun EditProfileDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                         focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { if (it.length <= 10 && it.all { c -> c.isDigit() }) phone = it },
                     label = { Text("Phone") },
-                    prefix = { Text("+977 ", color = Color(0xFF0E1D2A), fontWeight = FontWeight.Medium) },
+                    prefix = { Text("+977 ", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                         focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -415,11 +445,55 @@ private fun EditProfileDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color(0xFF6F7A6E))
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp)
+    )
+}
+
+// ── Photo Options Dialog ──────────────────────────────────────────────────────
+@Composable
+private fun PhotoOptionsDialog(
+    hasImage: Boolean,
+    onChangePhoto: () -> Unit,
+    onRemovePhoto: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Profile Photo", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
+        text = {
+            Column {
+                PhotoOptionRow(label = "Change Photo", color = Color(0xFF006B2C), onClick = onChangePhoto)
+                if (hasImage) {
+                    PhotoOptionRow(label = "Remove Photo", color = MaterialTheme.colorScheme.error, onClick = onRemovePhoto)
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(16.dp)
+    )
+}
+
+@Composable
+private fun PhotoOptionRow(label: String, color: Color, onClick: () -> Unit) {
+    Text(
+        text = label,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Medium,
+        color = color,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp)
     )
 }
 
@@ -439,7 +513,7 @@ private fun ChangePasswordDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Change Password", fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A)) },
+        title = { Text(text = "Change Password", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 PasswordField(
@@ -475,10 +549,10 @@ private fun ChangePasswordDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color(0xFF6F7A6E))
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp)
     )
 }
@@ -506,15 +580,15 @@ private fun PasswordField(
                         id = if (visible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24
                     ),
                     contentDescription = null,
-                    tint = Color(0xFF6F7A6E)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         },
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedIndicatorColor = Color(0xFF006B2C),
-            unfocusedIndicatorColor = Color(0xFF6F7A6E)
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     )
 }
@@ -526,7 +600,7 @@ private fun ProfileSectionTitle(title: String) {
         text = title,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
-        color = Color(0xFF6F7A6E),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(start = 20.dp, bottom = 6.dp)
     )
 }
@@ -538,8 +612,8 @@ private fun ProfileInfoRow(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, fontSize = 13.sp, color = Color(0xFF6F7A6E))
-        Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+        Text(text = label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -556,8 +630,8 @@ private fun ProfileActionRow(icon: ImageVector, label: String, iconTint: Color, 
             Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(18.dp))
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text = label, fontSize = 15.sp, color = Color(0xFF0E1D2A), modifier = Modifier.weight(1f))
-        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF6F7A6E), modifier = Modifier.size(20.dp))
+        Text(text = label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
     }
 }
 

@@ -31,6 +31,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.MedicineModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.MedicineViewModel
 
 class BrowseAllMedicinesActivity : ComponentActivity() {
@@ -58,24 +60,26 @@ class BrowseAllMedicinesActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            BrowseAllMedicinesBody(
-                onMedicineClick = { medicine ->
-                    val i = Intent(this, UserMedicineDetailActivity::class.java)
-                    i.putExtra("medicineId", medicine.medicineId)
-                    i.putExtra("name", medicine.name)
-                    i.putExtra("brand", medicine.brand)
-                    i.putExtra("category", medicine.category)
-                    i.putExtra("description", medicine.description)
-                    i.putExtra("price", medicine.price)
-                    i.putExtra("stock", medicine.stock)
-                    i.putExtra("dosage", medicine.dosage)
-                    i.putExtra("requiresPrescription", medicine.requiresPrescription)
-                    i.putExtra("type", medicine.type)
-                    i.putExtra("howToUse", medicine.howToUse)
-                    startActivity(i)
-                },
-                onBack = { finish() }
-            )
+            PharmaXTheme {
+                BrowseAllMedicinesBody(
+                    onMedicineClick = { medicine ->
+                        val i = Intent(this, UserMedicineDetailActivity::class.java)
+                        i.putExtra("medicineId", medicine.medicineId)
+                        i.putExtra("name", medicine.name)
+                        i.putExtra("brand", medicine.brand)
+                        i.putExtra("category", medicine.category)
+                        i.putExtra("description", medicine.description)
+                        i.putExtra("price", medicine.price)
+                        i.putExtra("stock", medicine.stock)
+                        i.putExtra("dosage", medicine.dosage)
+                        i.putExtra("requiresPrescription", medicine.requiresPrescription)
+                        i.putExtra("type", medicine.type)
+                        i.putExtra("howToUse", medicine.howToUse)
+                        startActivity(i)
+                    },
+                    onBack = { finish() }
+                )
+            }
         }
     }
 }
@@ -120,7 +124,7 @@ fun BrowseAllMedicinesScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
 
@@ -128,7 +132,7 @@ fun BrowseAllMedicinesScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -147,7 +151,7 @@ fun BrowseAllMedicinesScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Box {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                     Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
                 }
             }
@@ -157,15 +161,15 @@ fun BrowseAllMedicinesScreen(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                placeholder = { Text("Search by name, brand or category...", color = Color(0xFF6F7A6E), fontSize = 14.sp) },
-                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color(0xFF6F7A6E)) },
+                placeholder = { Text("Search by name, brand or category...", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp) },
+                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 singleLine = true,
                 shape = RoundedCornerShape(50.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFFBFCABB),
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                     focusedBorderColor = Color(0xFF006B2C),
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface
                 )
             )
 
@@ -173,7 +177,7 @@ fun BrowseAllMedicinesScreen(
             Text(
                 text = "${filtered.size} ${if (filtered.size == 1) "medicine" else "medicines"} found",
                 fontSize = 13.sp,
-                color = Color(0xFF6F7A6E),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
@@ -194,7 +198,7 @@ fun BrowseAllMedicinesScreen(
                             Text(
                                 text = if (searchQuery.isBlank()) "No medicines available yet" else "No results for \"$searchQuery\"",
                                 fontSize = 15.sp,
-                                color = Color(0xFF6F7A6E)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -219,7 +223,7 @@ fun BrowseAllMedicinesScreen(
 private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
     val isOutOfStock = medicine.stock == 0
     val isLowStock = medicine.stock in 1..10
-    val stockColor = if (isOutOfStock || isLowStock) Color(0xFFBA1A1A) else Color(0xFF006B2C)
+    val stockColor = if (isOutOfStock || isLowStock) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
     val stockLabel = when {
         isOutOfStock -> "Out of Stock"
         isLowStock   -> "Low Stock"
@@ -228,7 +232,7 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
 
     Card(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth().clickable { onClick() }
     ) {
@@ -236,7 +240,7 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .background(Color(0xFFE8F5E9), RoundedCornerShape(12.dp)),
+                    .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = "💊", fontSize = 26.sp)
@@ -250,7 +254,7 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
                         text = medicine.name,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF0E1D2A),
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
                     Box(
@@ -265,12 +269,12 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
                             text = if (medicine.requiresPrescription) "Rx" else "OTC",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (medicine.requiresPrescription) Color(0xFFBA1A1A) else Color(0xFF006B2C)
+                            color = if (medicine.requiresPrescription) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
                         )
                     }
                 }
 
-                Text(text = medicine.brand, fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                Text(text = medicine.brand, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 if (medicine.category.isNotBlank()) {
                     Text(
@@ -283,7 +287,7 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                HorizontalDivider(color = Color(0xFFF1F4F8))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 Spacer(modifier = Modifier.height(6.dp))
 

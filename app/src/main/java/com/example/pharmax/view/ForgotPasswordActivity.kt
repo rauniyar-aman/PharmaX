@@ -25,6 +25,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -49,13 +50,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.R
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.UserViewModel
 
 class ForgotPasswordActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { ForgotPasswordBody(onBack = { finish() }) }
+        setContent { PharmaXTheme { ForgotPasswordBody(onBack = { finish() }) } }
     }
 }
 
@@ -92,7 +94,7 @@ fun ForgotPasswordScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -112,25 +114,25 @@ fun ForgotPasswordScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                     .padding(24.dp)
             ) {
 
-                Text(text = "Forgot Password?", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
+                Text(text = "Forgot Password?", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Enter the email address associated with your account and we'll send you a link to reset your password.",
-                    fontSize = 14.sp, color = Color(0xFF3F493F), lineHeight = 20.sp
+                    fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Text(text = "Email Address", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                Text(text = "Email Address", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = email, onValueChange = { email = it }, modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("e.g. name@company.com") }, singleLine = true, shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E))
+                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -151,17 +153,17 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null, tint = Color(0xFF3F493F), modifier = Modifier.size(16.dp))
+                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(text = "Back to Sign In", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF3F493F), modifier = Modifier.clickable { onBack() })
+                Text(text = "Back to Sign In", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.clickable { onBack() })
             }
 
             Spacer(modifier = Modifier.height(40.dp))
 
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "END-TO-END SECURE", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF6F7A6E), letterSpacing = 1.sp)
+                Text(text = "END-TO-END SECURE", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Your medical data and credentials are encrypted according to HIPAA healthcare standards.", fontSize = 12.sp, color = Color(0xFF6F7A6E), textAlign = TextAlign.Center, lineHeight = 18.sp)
+                Text(text = "Your medical data and credentials are encrypted according to HIPAA healthcare standards.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, lineHeight = 18.sp)
             }
 
             Spacer(modifier = Modifier.height(24.dp))

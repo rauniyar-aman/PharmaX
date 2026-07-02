@@ -26,6 +26,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -52,13 +53,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.R
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.UserViewModel
 
 class SignInActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { SignInBody() }
+        setContent { PharmaXTheme { SignInBody() } }
     }
 }
 
@@ -125,7 +127,7 @@ fun SignInScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -146,7 +148,7 @@ fun SignInScreen(
                 text = "Welcome Back",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0E1D2A),
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             )
@@ -156,7 +158,7 @@ fun SignInScreen(
             Text(
                 text = "Access your clinical records and pharmacy services securely.",
                 fontSize = 14.sp,
-                color = Color(0xFF3F493F),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
             )
@@ -167,11 +169,11 @@ fun SignInScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                     .padding(24.dp)
             ) {
 
-                Text(text = "Email Address", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                Text(text = "Email Address", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = email,
@@ -181,17 +183,17 @@ fun SignInScreen(
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                         focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Password", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                    Text(text = "Password", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                     Text(text = "Forgot Password?", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0051D5), modifier = Modifier.clickable { onForgotPassword() })
                 }
 
@@ -209,16 +211,16 @@ fun SignInScreen(
                             Icon(
                                 painter = painterResource(id = if (passwordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24),
                                 contentDescription = null,
-                                tint = Color(0xFF6F7A6E)
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     },
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                         focusedIndicatorColor = Color(0xFF006B2C),
-                        unfocusedIndicatorColor = Color(0xFF6F7A6E)
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
 
@@ -245,7 +247,7 @@ fun SignInScreen(
             Text(
                 text = "Can't sign in? Check your spam folder for the verification email.",
                 fontSize = 12.sp,
-                color = Color(0xFF6F7A6E),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
             )
@@ -282,7 +284,7 @@ fun SignInScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row {
-                Text(text = "New here?", color = Color(0xFF3F493F), fontSize = 14.sp)
+                Text(text = "New here?", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(text = "Create account", color = Color(0xFF006B2C), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onCreateAccount() })
             }
@@ -290,16 +292,16 @@ fun SignInScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             Row {
-                Text(text = "Privacy Policy", fontSize = 12.sp, color = Color(0xFF6F7A6E))
-                Text(text = "   |   ", fontSize = 12.sp, color = Color(0xFF6F7A6E))
-                Text(text = "Terms of Service", fontSize = 12.sp, color = Color(0xFF6F7A6E))
-                Text(text = "   |   ", fontSize = 12.sp, color = Color(0xFF6F7A6E))
-                Text(text = "HIPAA", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                Text(text = "Privacy Policy", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "   |   ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Terms of Service", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "   |   ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "HIPAA", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(text = "© 2024 PharmaX Healthcare Systems.", fontSize = 11.sp, color = Color(0xFF6F7A6E), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text(text = "© 2024 PharmaX Healthcare Systems.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(24.dp))
         }

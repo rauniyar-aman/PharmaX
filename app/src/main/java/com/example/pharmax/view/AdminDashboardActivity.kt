@@ -40,7 +40,9 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -59,7 +61,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.MedicineModel
+import com.example.pharmax.model.PrescriptionModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.MedicineViewModel
+import com.example.pharmax.viewmodel.PrescriptionViewModel
 import com.example.pharmax.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
@@ -68,7 +73,9 @@ class AdminDashboardActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AdminDashboardBody()
+            PharmaXTheme {
+                AdminDashboardBody()
+            }
         }
     }
 }
@@ -78,15 +85,18 @@ fun AdminDashboardBody() {
     val context = LocalContext.current
     val vm: MedicineViewModel = viewModel()
     val userVm: UserViewModel = viewModel()
+    val prescriptionVm: PrescriptionViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val medicines by vm.medicines.collectAsState()
     val isLoggedOut by userVm.isLoggedOut.collectAsState()
     val adminUser by userVm.user.collectAsState()
+    val prescriptions by prescriptionVm.prescriptions.collectAsState()
 
     LaunchedEffect(Unit) {
         vm.loadMedicines()
         userVm.loadCurrentUser()
+        prescriptionVm.loadAllPrescriptions()
     }
 
     LaunchedEffect(message) {
@@ -105,6 +115,7 @@ fun AdminDashboardBody() {
     }
 
     val lowStockMedicines = medicines.filter { it.stock in 0..10 }
+    val pendingPrescriptions = prescriptions.filter { it.status == "Pending" }
 
     AdminDashboardScreen(
         adminName = adminUser?.fullName ?: "Admin",
@@ -112,10 +123,26 @@ fun AdminDashboardBody() {
         lowStockMedicines = lowStockMedicines,
         lowStockCount = lowStockMedicines.size,
         totalMedicineCount = medicines.size,
+        pendingPrescriptions = pendingPrescriptions,
+        pendingPrescriptionCount = pendingPrescriptions.size,
         onAddMedicine = { context.startActivity(Intent(context, AddMedicineActivity::class.java)) },
         onAddCategory = { context.startActivity(Intent(context, AddCategoryActivity::class.java)) },
         onNavigateMedicines = { context.startActivity(Intent(context, AdminMedicineManagement::class.java)) },
         onNavigateCategories = { context.startActivity(Intent(context, AdminCategoryManagement::class.java)) },
+        onNavigatePrescriptions = { context.startActivity(Intent(context, AdminPrescriptionManagement::class.java)) },
+        onPrescriptionClick = { prescription ->
+            val intent = Intent(context, AdminPrescriptionDetailActivity::class.java)
+            intent.putExtra("prescriptionId", prescription.prescriptionId)
+            intent.putExtra("userName", prescription.userName)
+            intent.putExtra("userPhone", prescription.userPhone)
+            intent.putExtra("medicineName", prescription.medicineName)
+            intent.putExtra("imageUrl", prescription.imageUrl)
+            intent.putExtra("notes", prescription.notes)
+            intent.putExtra("status", prescription.status)
+            intent.putExtra("adminComment", prescription.adminComment)
+            intent.putExtra("uploadedAt", prescription.uploadedAt)
+            context.startActivity(intent)
+        },
         onLogout = { userVm.logOut() }
     )
 }
@@ -127,10 +154,14 @@ fun AdminDashboardScreen(
     lowStockMedicines: List<MedicineModel> = emptyList(),
     lowStockCount: Int = 0,
     totalMedicineCount: Int = 0,
+    pendingPrescriptions: List<PrescriptionModel> = emptyList(),
+    pendingPrescriptionCount: Int = 0,
     onAddMedicine: () -> Unit = {},
     onAddCategory: () -> Unit = {},
     onNavigateMedicines: () -> Unit = {},
     onNavigateCategories: () -> Unit = {},
+    onNavigatePrescriptions: () -> Unit = {},
+    onPrescriptionClick: (PrescriptionModel) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -145,28 +176,31 @@ fun AdminDashboardScreen(
                 onClose = { scope.launch { drawerState.close() } },
                 onNavigateMedicines = { scope.launch { drawerState.close() }; onNavigateMedicines() },
                 onNavigateCategories = { scope.launch { drawerState.close() }; onNavigateCategories() },
+                onNavigatePrescriptions = { scope.launch { drawerState.close() }; onNavigatePrescriptions() },
                 onLogout = { scope.launch { drawerState.close() }; onLogout() }
             )
         }
     ) {
+        Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
+                .padding(innerPadding)
         ) {
 
             // ── Top bar ───────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Menu",
-                    tint = Color(0xFF0E1D2A),
+                    tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
                         .size(24.dp)
                         .clickable { scope.launch { drawerState.open() } }
@@ -180,7 +214,7 @@ fun AdminDashboardScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Box {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                     Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -200,40 +234,83 @@ fun AdminDashboardScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
 
-                // ── 2 Stat cards ──────────────────────────────────────────
+                // ── 3 Stat cards ──────────────────────────────────────────
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AdminStatDashCard(
-                        label = "Total Medicines",
-                        value = "$totalMedicineCount",
+                        label = "Pending Rx",
+                        value = "$pendingPrescriptionCount",
                         color = Color(0xFFE65100),
                         bgColor = Color(0xFFFFF3E0),
                         modifier = Modifier.weight(1f)
                     )
                     AdminStatDashCard(
-                        label = "Low Stock Alerts",
+                        label = "Low Stock",
                         value = "$lowStockCount",
                         color = Color(0xFFBA1A1A),
                         bgColor = Color(0xFFFFEDED),
                         modifier = Modifier.weight(1f)
                     )
+                    AdminStatDashCard(
+                        label = "Medicines",
+                        value = "$totalMedicineCount",
+                        color = Color(0xFF0051D5),
+                        bgColor = Color(0xFFE3EFFF),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // ── Prescriptions Awaiting Verification ───────────────────
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    AdminSectionHeader(title = "Prescriptions Awaiting Verification")
+                    if (pendingPrescriptions.isNotEmpty()) {
+                        Text(
+                            text = "View All",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF0051D5),
+                            modifier = Modifier.clickable { onNavigatePrescriptions() }
+                        )
+                    }
+                }
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column {
+                        if (pendingPrescriptions.isEmpty()) {
+                            Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
+                                Text(text = "No prescriptions awaiting review", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        } else {
+                            pendingPrescriptions.take(3).forEachIndexed { index, prescription ->
+                                PrescriptionDashRow(
+                                    customerName = prescription.userName.ifBlank { "Unknown User" },
+                                    medicineName = prescription.medicineName.ifBlank { "General Prescription" },
+                                    onClick = { onPrescriptionClick(prescription) }
+                                )
+                                if (index < pendingPrescriptions.take(3).lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            }
+                        }
+                    }
                 }
 
                 // ── Low Stock Medicines ───────────────────────────────────
                 AdminSectionHeader(title = "Low Stock Medicines")
                 Card(
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column {
                         if (lowStockMedicines.isEmpty()) {
                             Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
-                                Text(text = "No low stock alerts", fontSize = 14.sp, color = Color(0xFF6F7A6E))
+                                Text(text = "No low stock alerts", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         } else {
                             lowStockMedicines.take(5).forEachIndexed { index, medicine ->
                                 LowStockRow(name = medicine.name, stock = medicine.stock)
-                                if (index < lowStockMedicines.take(5).lastIndex) HorizontalDivider(color = Color(0xFFF1F4F8))
+                                if (index < lowStockMedicines.take(5).lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             }
                         }
                     }
@@ -273,6 +350,7 @@ fun AdminDashboardScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+        } // end Scaffold
     }
 }
 
@@ -284,6 +362,7 @@ fun AdminSideDrawer(
     onClose: () -> Unit = {},
     onNavigateMedicines: () -> Unit = {},
     onNavigateCategories: () -> Unit = {},
+    onNavigatePrescriptions: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val navItems = listOf(
@@ -297,7 +376,7 @@ fun AdminSideDrawer(
         modifier = Modifier
             .width(280.dp)
             .fillMaxHeight()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(top = 48.dp),
         verticalArrangement = Arrangement.Top
     ) {
@@ -315,19 +394,19 @@ fun AdminSideDrawer(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = adminName, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
-                Text(text = adminEmail, fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                Text(text = adminName, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = adminEmail, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Close",
-                tint = Color(0xFF6F7A6E),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp).clickable { onClose() }
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider(color = Color(0xFFF1F4F8))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(modifier = Modifier.height(8.dp))
 
         navItems.forEach { (label, icon, isActive) ->
@@ -339,6 +418,7 @@ fun AdminSideDrawer(
                     when (label) {
                         "Medicines" -> onNavigateMedicines()
                         "Categories" -> onNavigateCategories()
+                        "Prescriptions" -> onNavigatePrescriptions()
                         else -> onClose()
                     }
                 }
@@ -346,7 +426,7 @@ fun AdminSideDrawer(
         }
 
         Spacer(modifier = Modifier.weight(1f))
-        HorizontalDivider(color = Color(0xFFF1F4F8))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -357,11 +437,11 @@ fun AdminSideDrawer(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Logout",
-                tint = Color(0xFFBA1A1A),
+                tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(14.dp))
-            Text(text = "Logout", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFBA1A1A))
+            Text(text = "Logout", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -372,7 +452,7 @@ fun DrawerNavItem(label: String, icon: ImageVector, isActive: Boolean, onClick: 
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (isActive) Color(0xFFE8F5E9) else Color.Transparent,
+                if (isActive) MaterialTheme.colorScheme.tertiaryContainer else Color.Transparent,
                 RoundedCornerShape(8.dp)
             )
             .clickable { onClick() }
@@ -382,7 +462,7 @@ fun DrawerNavItem(label: String, icon: ImageVector, isActive: Boolean, onClick: 
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = if (isActive) Color(0xFF006B2C) else Color(0xFF6F7A6E),
+            tint = if (isActive) Color(0xFF006B2C) else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(14.dp))
@@ -390,7 +470,7 @@ fun DrawerNavItem(label: String, icon: ImageVector, isActive: Boolean, onClick: 
             text = label,
             fontSize = 15.sp,
             fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isActive) Color(0xFF006B2C) else Color(0xFF0E1D2A)
+            color = if (isActive) Color(0xFF006B2C) else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -415,7 +495,34 @@ fun AdminStatDashCard(label: String, value: String, color: Color, bgColor: Color
 
 @Composable
 fun AdminSectionHeader(title: String) {
-    Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
+    Text(text = title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+}
+
+@Composable
+fun PrescriptionDashRow(customerName: String, medicineName: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = customerName.first().uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0051D5))
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = customerName, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = medicineName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Box(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(50.dp))
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(text = "Review", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF006B2C))
+        }
+    }
 }
 
 @Composable
@@ -426,13 +533,13 @@ fun LowStockRow(name: String, stock: Int) {
     ) {
         Text(text = "💊", fontSize = 18.sp)
         Spacer(modifier = Modifier.width(10.dp))
-        Text(text = name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A), modifier = Modifier.weight(1f))
+        Text(text = name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         Box(
             modifier = Modifier
-                .background(Color(0xFFFFEDED), RoundedCornerShape(50.dp))
+                .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(50.dp))
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
-            Text(text = "Stock: $stock", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFBA1A1A))
+            Text(text = "Stock: $stock", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
         }
     }
 }

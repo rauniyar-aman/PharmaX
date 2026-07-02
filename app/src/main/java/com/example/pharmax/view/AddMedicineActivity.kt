@@ -3,8 +3,10 @@ package com.example.pharmax.view
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +38,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -51,7 +54,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -59,8 +64,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.pharmax.model.MedicineModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
+import com.example.pharmax.viewmodel.ImageViewModel
 import com.example.pharmax.viewmodel.MedicineViewModel
 
 class AddMedicineActivity : ComponentActivity() {
@@ -86,7 +94,9 @@ class AddMedicineActivity : ComponentActivity() {
         }
 
         setContent {
-            AddMedicineBody(editMedicine = editMedicine)
+            PharmaXTheme {
+                AddMedicineBody(editMedicine = editMedicine)
+            }
         }
     }
 }
@@ -97,10 +107,14 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
     val context = LocalContext.current
     val vm: MedicineViewModel = viewModel()
     val categoryVm: CategoryViewModel = viewModel()
+    val imageVm: ImageViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val isLoading by vm.loading.collectAsState()
     val categories by categoryVm.categories.collectAsState()
+    val isUploading by imageVm.isUploading.collectAsState()
+    val imageMessage by imageVm.message.collectAsState()
+    var imageUrl by remember { mutableStateOf(editMedicine?.imageUrl ?: "") }
 
     LaunchedEffect(Unit) { categoryVm.loadCategories() }
 
@@ -111,15 +125,32 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
         }
     }
 
+    LaunchedEffect(imageMessage) {
+        if (!imageMessage.isNullOrBlank()) {
+            Toast.makeText(context, imageMessage, Toast.LENGTH_LONG).show()
+            imageVm.clearMessage()
+        }
+    }
+
+    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            imageVm.uploadImage(it, context) { url -> imageUrl = url }
+        }
+    }
+
     AddMedicineScreen(
         editMedicine = editMedicine,
         isLoading = isLoading,
+        isUploadingImage = isUploading,
+        imageUrl = imageUrl,
         categoryNames = categories.filter { it.isActive }.map { it.name },
+        onPickImage = { imageLauncher.launch("image/*") },
         onSave = { model ->
+            val finalModel = model.copy(imageUrl = imageUrl)
             if (editMedicine != null) {
-                vm.updateMedicine(model) { (context as? ComponentActivity)?.finish() }
+                vm.updateMedicine(finalModel) { (context as? ComponentActivity)?.finish() }
             } else {
-                vm.addMedicine(model) { (context as? ComponentActivity)?.finish() }
+                vm.addMedicine(finalModel) { (context as? ComponentActivity)?.finish() }
             }
         },
         onCancel = { (context as? ComponentActivity)?.finish() }
@@ -131,7 +162,10 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
 fun AddMedicineScreen(
     editMedicine: MedicineModel? = null,
     isLoading: Boolean = false,
+    isUploadingImage: Boolean = false,
+    imageUrl: String = "",
     categoryNames: List<String> = listOf("Pain Relief", "Antibiotics", "Vitamins", "Supplements", "Skincare", "Diabetes"),
+    onPickImage: () -> Unit = {},
     onSave: (MedicineModel) -> Unit = {},
     onCancel: () -> Unit = {}
 ) {
@@ -155,14 +189,14 @@ fun AddMedicineScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F9FF))
+            .background(MaterialTheme.colorScheme.background)
     ) {
 
         // ── Top bar ───────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -181,7 +215,7 @@ fun AddMedicineScreen(
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                 Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
             }
             Spacer(modifier = Modifier.width(12.dp))
@@ -202,20 +236,38 @@ fun AddMedicineScreen(
         ) {
 
             // ── Image upload ──────────────────────────────────────────────
-            Text(text = "MEDICINE IMAGE", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF6F7A6E), letterSpacing = 1.sp)
+            Text(text = "MEDICINE IMAGE", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(160.dp)
-                    .background(Color(0xFFE3EFFF), RoundedCornerShape(12.dp))
-                    .border(2.dp, Color(0xFFBFCABB), RoundedCornerShape(12.dp)),
+                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp))
+                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                    .clickable { onPickImage() },
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "🖼", fontSize = 36.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Upload Medicine Photo", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
-                    Text(text = "Recommended size: 800×800px (Max 2MB)", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                if (imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "Medicine Photo",
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "🖼", fontSize = 36.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "Upload Medicine Photo", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = "Tap to choose from gallery", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                if (isUploadingImage) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp)
+                    }
                 }
             }
 
@@ -266,7 +318,7 @@ fun AddMedicineScreen(
                 DropdownMenu(
                     expanded = categoryExpanded,
                     onDismissRequest = { categoryExpanded = false },
-                    modifier = Modifier.background(Color.White)
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                 ) {
                     categories.forEach { cat ->
                         DropdownMenuItem(
@@ -334,13 +386,13 @@ fun AddMedicineScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Requires Prescription", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
-                    Text(text = "Rx-only medicines require doctor approval", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                    Text(text = "Requires Prescription", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = "Rx-only medicines require doctor approval", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(
                     checked = requiresPrescription,
@@ -357,12 +409,12 @@ fun AddMedicineScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .background(
-                                if (medicineType == t) Color(0xFFE8F5E9) else Color.White,
+                                if (medicineType == t) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surface,
                                 RoundedCornerShape(50.dp)
                             )
                             .border(
                                 1.dp,
-                                if (medicineType == t) Color(0xFF006B2C) else Color(0xFFBFCABB),
+                                if (medicineType == t) Color(0xFF006B2C) else MaterialTheme.colorScheme.outline,
                                 RoundedCornerShape(50.dp)
                             )
                             .clickable { medicineType = t }
@@ -371,7 +423,7 @@ fun AddMedicineScreen(
                         Box(
                             modifier = Modifier
                                 .size(16.dp)
-                                .border(2.dp, if (medicineType == t) Color(0xFF006B2C) else Color(0xFFBFCABB), CircleShape)
+                                .border(2.dp, if (medicineType == t) Color(0xFF006B2C) else MaterialTheme.colorScheme.outline, CircleShape)
                                 .background(Color.Transparent, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
@@ -380,7 +432,7 @@ fun AddMedicineScreen(
                             }
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = t, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
+                        Text(text = t, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
@@ -418,7 +470,7 @@ fun AddMedicineScreen(
                     ingredients.toList().forEach { ingredient ->
                         Row(
                             modifier = Modifier
-                                .background(Color(0xFFE8F5E9), RoundedCornerShape(50.dp))
+                                .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(50.dp))
                                 .padding(horizontal = 10.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -453,7 +505,7 @@ fun AddMedicineScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -462,10 +514,10 @@ fun AddMedicineScreen(
                 modifier = Modifier.weight(1f).height(52.dp),
                 shape = RoundedCornerShape(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF0E1D2A)
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFCABB))
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Text(text = "Cancel", fontSize = 15.sp, fontWeight = FontWeight.Medium)
             }
@@ -509,15 +561,15 @@ fun AddMedicineScreen(
 
 @Composable
 private fun FormLabel(text: String) {
-    Text(text = text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+    Text(text = text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
 }
 
 @Composable
 private fun medicineFieldColors() = TextFieldDefaults.colors(
-    focusedContainerColor = Color.White,
-    unfocusedContainerColor = Color.White,
+    focusedContainerColor = MaterialTheme.colorScheme.surface,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
     focusedIndicatorColor = Color(0xFF006B2C),
-    unfocusedIndicatorColor = Color(0xFFBFCABB)
+    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
 )
 
 @Preview(showBackground = true, showSystemUi = true)

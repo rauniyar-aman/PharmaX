@@ -1,5 +1,6 @@
 package com.example.pharmax.view
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -31,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +44,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pharmax.model.MedicineModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 
 class UserMedicineDetailActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,21 +64,40 @@ class UserMedicineDetailActivity : ComponentActivity() {
             howToUse = intent.getStringExtra("howToUse") ?: ""
         )
         setContent {
-            UserMedicineDetailBody(medicine = medicine, onBack = { finish() })
+            PharmaXTheme {
+                UserMedicineDetailBody(
+                    medicine = medicine,
+                    onBack = { finish() },
+                    onUploadPrescription = {
+                        val intent = Intent(this, UploadPrescriptionActivity::class.java)
+                        intent.putExtra("medicineId", medicine.medicineId)
+                        intent.putExtra("medicineName", medicine.name)
+                        startActivity(intent)
+                    }
+                )
+            }
         }
     }
 }
 
 @Composable
-fun UserMedicineDetailBody(medicine: MedicineModel = MedicineModel(), onBack: () -> Unit = {}) {
-    UserMedicineDetailScreen(medicine = medicine, onBack = onBack)
+fun UserMedicineDetailBody(
+    medicine: MedicineModel = MedicineModel(),
+    onBack: () -> Unit = {},
+    onUploadPrescription: () -> Unit = {}
+) {
+    UserMedicineDetailScreen(medicine = medicine, onBack = onBack, onUploadPrescription = onUploadPrescription)
 }
 
 @Composable
-fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: () -> Unit = {}) {
+fun UserMedicineDetailScreen(
+    medicine: MedicineModel = MedicineModel(),
+    onBack: () -> Unit = {},
+    onUploadPrescription: () -> Unit = {}
+) {
     val isOutOfStock = medicine.stock == 0
     val isLowStock = medicine.stock in 1..10
-    val stockColor = if (isOutOfStock || isLowStock) Color(0xFFBA1A1A) else Color(0xFF006B2C)
+    val stockColor = if (isOutOfStock || isLowStock) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
     val stockLabel = when {
         isOutOfStock -> "Out of Stock"
         isLowStock   -> "Low Stock"
@@ -88,7 +110,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F9FF))
+            .background(MaterialTheme.colorScheme.background)
             .padding(innerPadding)
     ) {
 
@@ -96,7 +118,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -115,7 +137,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                 Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
             }
         }
@@ -131,7 +153,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
             // ── Hero card ─────────────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
@@ -141,7 +163,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
                     Box(
                         modifier = Modifier
                             .size(100.dp)
-                            .background(Color(0xFFE8F5E9), RoundedCornerShape(20.dp)),
+                            .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(20.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(text = "💊", fontSize = 48.sp)
@@ -149,9 +171,9 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = medicine.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
+                    Text(text = medicine.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = medicine.brand, fontSize = 14.sp, color = Color(0xFF6F7A6E))
+                    Text(text = medicine.brand, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -162,7 +184,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
                                     .background(Color(0xFFE3EFFF), RoundedCornerShape(4.dp))
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
-                                Text(text = medicine.category.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                                Text(text = medicine.category.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                         Box(
@@ -177,23 +199,23 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
                                 text = if (medicine.requiresPrescription) "Prescription Required" else "Over The Counter",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (medicine.requiresPrescription) Color(0xFFBA1A1A) else Color(0xFF006B2C)
+                                color = if (medicine.requiresPrescription) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = Color(0xFFF1F4F8))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Price", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Price", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(text = "NPR ${medicine.price.toInt()}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0051D5))
                         }
-                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFFF1F4F8)))
+                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(MaterialTheme.colorScheme.outlineVariant))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Availability", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Availability", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(text = stockLabel, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = stockColor)
                         }
                     }
@@ -203,27 +225,27 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
             // ── Info card ─────────────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
                     if (medicine.dosage.isNotBlank()) {
                         DetailRow(label = "Dosage / Strength", value = medicine.dosage)
-                        HorizontalDivider(color = Color(0xFFF1F4F8), modifier = Modifier.padding(vertical = 10.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 10.dp))
                     }
 
                     if (medicine.description.isNotBlank()) {
-                        Text(text = "About this medicine", fontSize = 13.sp, color = Color(0xFF6F7A6E), fontWeight = FontWeight.Medium)
+                        Text(text = "About this medicine", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = medicine.description, fontSize = 14.sp, color = Color(0xFF0E1D2A), lineHeight = 22.sp)
-                        HorizontalDivider(color = Color(0xFFF1F4F8), modifier = Modifier.padding(vertical = 10.dp))
+                        Text(text = medicine.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 22.sp)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 10.dp))
                     }
 
                     if (medicine.howToUse.isNotBlank()) {
-                        Text(text = "How to use", fontSize = 13.sp, color = Color(0xFF6F7A6E), fontWeight = FontWeight.Medium)
+                        Text(text = "How to use", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = medicine.howToUse, fontSize = 14.sp, color = Color(0xFF0E1D2A), lineHeight = 22.sp)
+                        Text(text = medicine.howToUse, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 22.sp)
                     }
                 }
             }
@@ -248,7 +270,7 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
                 }
 
                 ElevatedButton(
-                    onClick = { },
+                    onClick = onUploadPrescription,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF006B2C), contentColor = Color.White),
@@ -265,9 +287,9 @@ fun UserMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: 
 }
 
 @Composable
-private fun DetailRow(label: String, value: String, valueColor: Color = Color(0xFF0E1D2A)) {
+private fun DetailRow(label: String, value: String, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(text = label, fontSize = 13.sp, color = Color(0xFF6F7A6E), modifier = Modifier.weight(1f))
+        Text(text = label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
         Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = valueColor)
     }
 }

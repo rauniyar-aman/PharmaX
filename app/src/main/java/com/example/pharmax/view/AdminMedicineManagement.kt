@@ -39,6 +39,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.MedicineModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.MedicineViewModel
 
 class AdminMedicineManagement : ComponentActivity() {
@@ -67,7 +69,9 @@ class AdminMedicineManagement : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AdminMedicineManagementBody()
+            PharmaXTheme {
+                AdminMedicineManagementBody()
+            }
         }
     }
 }
@@ -173,7 +177,7 @@ fun AdminMedicineManagementScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
 
@@ -181,15 +185,15 @@ fun AdminMedicineManagementScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "Medicine Management", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A), modifier = Modifier.weight(1f))
+                Text(text = "Medicine Management", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 Box {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                     Box(
                         modifier = Modifier
                             .size(8.dp)
@@ -220,12 +224,12 @@ fun AdminMedicineManagementScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 12.dp),
                         placeholder = { Text("Search medicines...") },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color(0xFF6F7A6E)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         shape = RoundedCornerShape(50.dp),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFFE3EFFF),
-                            unfocusedContainerColor = Color(0xFFE3EFFF),
+                            focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent
                         )
@@ -245,13 +249,13 @@ fun AdminMedicineManagementScreen(
                         // Filter button
                         Box(
                             modifier = Modifier
-                                .border(1.dp, Color(0xFFBFCABB), RoundedCornerShape(50.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(50.dp))
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(16.dp))
+                                Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(text = "Filter", fontSize = 13.sp, color = Color(0xFF0E1D2A), fontWeight = FontWeight.Medium)
+                                Text(text = "Filter", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
                             }
                         }
                         filters.forEach { filter ->
@@ -283,9 +287,9 @@ fun AdminMedicineManagementScreen(
                         ) {
                             Text(text = "💊", fontSize = 48.sp)
                             Spacer(modifier = Modifier.height(12.dp))
-                            Text(text = "No medicines found", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                            Text(text = "No medicines found", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = "Tap + to add your first medicine", fontSize = 13.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Tap + to add your first medicine", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -316,7 +320,7 @@ fun MedicineFilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) 
                 color = when {
                     isSelected && isLow -> Color(0xFFFFF3E0)
                     isSelected -> Color(0xFF00501F)
-                    else -> Color.White
+                    else -> MaterialTheme.colorScheme.surface
                 },
                 shape = RoundedCornerShape(50.dp)
             )
@@ -325,7 +329,7 @@ fun MedicineFilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) 
                 color = when {
                     isSelected && isLow -> Color(0xFFFF6D00)
                     isSelected -> Color.Transparent
-                    else -> Color(0xFFBFCABB)
+                    else -> MaterialTheme.colorScheme.outline
                 },
                 shape = RoundedCornerShape(50.dp)
             )
@@ -339,7 +343,7 @@ fun MedicineFilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) 
             color = when {
                 isSelected && isLow -> Color(0xFFFF6D00)
                 isSelected -> Color.White
-                else -> Color(0xFF0E1D2A)
+                else -> MaterialTheme.colorScheme.onSurface
             }
         )
     }
@@ -354,14 +358,14 @@ fun MedicineListItem(
 ) {
     val isLowStock = medicine.stock in 1..10
     val isOutOfStock = medicine.stock == 0
-    val stockColor = if (isLowStock || isOutOfStock) Color(0xFFBA1A1A) else Color(0xFF0E1D2A)
+    val stockColor = if (isLowStock || isOutOfStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
@@ -370,7 +374,7 @@ fun MedicineListItem(
             Box(
                 modifier = Modifier
                     .size(90.dp)
-                    .background(Color(0xFFE3EFFF), RoundedCornerShape(8.dp)),
+                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = "💊", fontSize = 36.sp)
@@ -379,22 +383,22 @@ fun MedicineListItem(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = medicine.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
-                Text(text = medicine.brand, fontSize = 13.sp, color = Color(0xFF6F7A6E))
+                Text(text = medicine.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = medicine.brand, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 if (medicine.category.isNotBlank()) {
                     Box(
                         modifier = Modifier
-                            .background(Color(0xFFE3EFFF), RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = medicine.category.uppercase(),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF0E1D2A)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -424,7 +428,7 @@ fun MedicineListItem(
                         Icon(
                             imageVector = Icons.Default.Visibility,
                             contentDescription = "View",
-                            tint = Color(0xFF6F7A6E),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .size(20.dp)
                                 .clickable { onView() }
@@ -432,7 +436,7 @@ fun MedicineListItem(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Edit",
-                            tint = Color(0xFF6F7A6E),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .size(20.dp)
                                 .clickable { onEdit() }
@@ -440,7 +444,7 @@ fun MedicineListItem(
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = Color(0xFFBA1A1A),
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier
                                 .size(20.dp)
                                 .clickable { onDelete() }

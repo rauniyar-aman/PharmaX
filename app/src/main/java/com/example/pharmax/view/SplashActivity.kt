@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.R
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
@@ -44,20 +45,22 @@ class SplashActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SplashBody(
-                onNavigateUserDashboard = {
-                    startActivity(Intent(this, DashboardActivity::class.java))
-                    finish()
-                },
-                onNavigateAdminDashboard = {
-                    startActivity(Intent(this, AdminDashboardActivity::class.java))
-                    finish()
-                },
-                onNavigateSignIn = {
-                    startActivity(Intent(this, SignInActivity::class.java))
-                    finish()
-                }
-            )
+            PharmaXTheme {
+                SplashBody(
+                    onNavigateUserDashboard = {
+                        startActivity(Intent(this, DashboardActivity::class.java))
+                        finish()
+                    },
+                    onNavigateAdminDashboard = {
+                        startActivity(Intent(this, AdminDashboardActivity::class.java))
+                        finish()
+                    },
+                    onNavigateSignIn = {
+                        startActivity(Intent(this, SignInActivity::class.java))
+                        finish()
+                    }
+                )
+            }
         }
     }
 }

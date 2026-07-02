@@ -29,6 +29,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -57,13 +58,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.R
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.UserViewModel
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { SignUpBody() }
+        setContent { PharmaXTheme { SignUpBody() } }
     }
 }
 
@@ -124,7 +126,7 @@ fun SignUpScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -144,20 +146,20 @@ fun SignUpScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .background(Color.White, RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                     .padding(24.dp)
             ) {
 
-                Text(text = "Create Account", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
+                Text(text = "Create Account", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Please enter your details to register.", fontSize = 14.sp, color = Color(0xFF3F493F))
+                Text(text = "Please enter your details to register.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 RequiredLabel("Full Name")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = fullName, onValueChange = { fullName = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("John Doe") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = fullNameError,
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant, errorIndicatorColor = MaterialTheme.colorScheme.error, errorContainerColor = MaterialTheme.colorScheme.surface))
                 if (fullNameError) ErrorText("Full name is required")
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -169,12 +171,12 @@ fun SignUpScreen(
                     onValueChange = { if (it.length <= 10 && it.all { c -> c.isDigit() }) phone = it },
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("9XXXXXXXXX") },
-                    prefix = { Text("+977 ", color = Color(0xFF0E1D2A), fontWeight = FontWeight.Medium) },
+                    prefix = { Text("+977 ", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium) },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
                     isError = phoneError,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White)
+                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant, errorIndicatorColor = MaterialTheme.colorScheme.error, errorContainerColor = MaterialTheme.colorScheme.surface)
                 )
                 if (phoneError) ErrorText("Phone number is required")
 
@@ -183,7 +185,7 @@ fun SignUpScreen(
                 RequiredLabel("Email Address")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = email, onValueChange = { email = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("email@example.com") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = emailError,
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant, errorIndicatorColor = MaterialTheme.colorScheme.error, errorContainerColor = MaterialTheme.colorScheme.surface))
                 if (emailError) ErrorText(if (email.isBlank()) "Email address is required" else "Please enter a valid email address")
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -191,7 +193,7 @@ fun SignUpScreen(
                 RequiredLabel("Confirm Email")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(value = confirmEmail, onValueChange = { confirmEmail = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Re-enter your email") }, singleLine = true, shape = RoundedCornerShape(8.dp), isError = confirmEmailError,
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White))
+                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant, errorIndicatorColor = MaterialTheme.colorScheme.error, errorContainerColor = MaterialTheme.colorScheme.surface))
                 if (confirmEmailError) ErrorText(if (confirmEmail.isBlank()) "Please confirm your email" else "Email addresses do not match")
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -201,9 +203,9 @@ fun SignUpScreen(
                 OutlinedTextField(
                     value = password, onValueChange = { password = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("••••••••") }, singleLine = true, isError = passwordError,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = { IconButton(onClick = { passwordVisible = !passwordVisible }) { Icon(painter = painterResource(id = if (passwordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24), contentDescription = null, tint = Color(0xFF6F7A6E)) } },
+                    trailingIcon = { IconButton(onClick = { passwordVisible = !passwordVisible }) { Icon(painter = painterResource(id = if (passwordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) } },
                     shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White)
+                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant, errorIndicatorColor = MaterialTheme.colorScheme.error, errorContainerColor = MaterialTheme.colorScheme.surface)
                 )
                 if (passwordError) ErrorText("Password is required")
 
@@ -214,9 +216,9 @@ fun SignUpScreen(
                 OutlinedTextField(
                     value = confirmPassword, onValueChange = { confirmPassword = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("••••••••") }, singleLine = true, isError = confirmPasswordError,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = { IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) { Icon(painter = painterResource(id = if (confirmPasswordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24), contentDescription = null, tint = Color(0xFF6F7A6E)) } },
+                    trailingIcon = { IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) { Icon(painter = painterResource(id = if (confirmPasswordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) } },
                     shape = RoundedCornerShape(8.dp),
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = Color(0xFF6F7A6E), errorIndicatorColor = Color(0xFFBA1A1A), errorContainerColor = Color.White)
+                    colors = TextFieldDefaults.colors(focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface, focusedIndicatorColor = Color(0xFF006B2C), unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant, errorIndicatorColor = MaterialTheme.colorScheme.error, errorContainerColor = MaterialTheme.colorScheme.surface)
                 )
                 if (confirmPasswordError) ErrorText(if (confirmPassword.isBlank()) "Confirm password is required" else "Passwords do not match")
 
@@ -232,7 +234,7 @@ fun SignUpScreen(
                             withStyle(SpanStyle(color = Color(0xFF0051D5), fontWeight = FontWeight.Medium)) { append("Privacy Policy") }
                             append(".")
                         },
-                        fontSize = 13.sp, color = Color(0xFF0E1D2A)
+                        fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -258,7 +260,7 @@ fun SignUpScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    Text(text = "Already have an account?", color = Color(0xFF3F493F), fontSize = 14.sp)
+                    Text(text = "Already have an account?", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = "Sign in", color = Color(0xFF006B2C), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onSignIn() })
                 }
@@ -266,9 +268,9 @@ fun SignUpScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    Text(text = "256-bit AES", fontSize = 11.sp, color = Color(0xFF6F7A6E))
-                    Text(text = "   |   ", fontSize = 11.sp, color = Color(0xFF6F7A6E))
-                    Text(text = "HIPAA Compliant", fontSize = 11.sp, color = Color(0xFF6F7A6E))
+                    Text(text = "256-bit AES", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "   |   ", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "HIPAA Compliant", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -280,14 +282,14 @@ fun SignUpScreen(
 @Composable
 private fun RequiredLabel(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
-        Text(text = " *", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFFBA1A1A))
+        Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = " *", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
     }
 }
 
 @Composable
 private fun ErrorText(message: String) {
-    Text(text = message, fontSize = 12.sp, color = Color(0xFFBA1A1A), modifier = Modifier.padding(top = 4.dp, start = 4.dp))
+    Text(text = message, fontSize = 12.sp, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 4.dp, start = 4.dp))
 }
 
 @Preview(showBackground = true, showSystemUi = true)

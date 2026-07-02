@@ -29,6 +29,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pharmax.model.MedicineModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 
 class AdminMedicineDetailActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,7 +63,9 @@ class AdminMedicineDetailActivity : ComponentActivity() {
         )
 
         setContent {
-            AdminMedicineDetailScreen(medicine = medicine, onBack = { finish() })
+            PharmaXTheme {
+                AdminMedicineDetailScreen(medicine = medicine, onBack = { finish() })
+            }
         }
     }
 }
@@ -70,7 +74,7 @@ class AdminMedicineDetailActivity : ComponentActivity() {
 fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: () -> Unit = {}) {
     val isLowStock = medicine.stock in 1..10
     val isOutOfStock = medicine.stock == 0
-    val stockColor = if (isLowStock || isOutOfStock) Color(0xFFBA1A1A) else Color(0xFF006B2C)
+    val stockColor = if (isLowStock || isOutOfStock) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
     val stockLabel = when {
         isOutOfStock -> "Out of Stock"
         isLowStock -> "Low Stock"
@@ -80,14 +84,14 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F9FF))
+            .background(MaterialTheme.colorScheme.background)
     ) {
 
         // ── Top bar ───────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -106,7 +110,7 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                 Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
             }
             Spacer(modifier = Modifier.width(12.dp))
@@ -129,7 +133,7 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
             // ── Hero card ─────────────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(
@@ -139,7 +143,7 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
                     Box(
                         modifier = Modifier
                             .size(100.dp)
-                            .background(Color(0xFFE3EFFF), RoundedCornerShape(12.dp)),
+                            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(text = "💊", fontSize = 48.sp)
@@ -147,8 +151,8 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = medicine.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
-                    Text(text = medicine.brand, fontSize = 14.sp, color = Color(0xFF6F7A6E))
+                    Text(text = medicine.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = medicine.brand, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -156,16 +160,16 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
                         if (medicine.category.isNotBlank()) {
                             Box(
                                 modifier = Modifier
-                                    .background(Color(0xFFE3EFFF), RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
-                                Text(text = medicine.category.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                                Text(text = medicine.category.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                         Box(
                             modifier = Modifier
                                 .background(
-                                    if (medicine.type == "Rx") Color(0xFFFFEDED) else Color(0xFFE8F5E9),
+                                    if (medicine.type == "Rx") MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer,
                                     RoundedCornerShape(4.dp)
                                 )
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -174,28 +178,28 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
                                 text = medicine.type,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (medicine.type == "Rx") Color(0xFFBA1A1A) else Color(0xFF006B2C)
+                                color = if (medicine.type == "Rx") MaterialTheme.colorScheme.error else Color(0xFF006B2C)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = Color(0xFFF1F4F8))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Price", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Price", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(text = "NPR ${medicine.price.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0051D5))
                         }
-                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFFF1F4F8)))
+                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(MaterialTheme.colorScheme.outlineVariant))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Stock", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Stock", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(text = "${medicine.stock}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = stockColor)
                         }
-                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFFF1F4F8)))
+                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(MaterialTheme.colorScheme.outlineVariant))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Status", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Status", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(text = stockLabel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = stockColor)
                         }
                     }
@@ -205,14 +209,14 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
             // ── Info rows card ────────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
                     if (medicine.dosage.isNotBlank()) {
                         MedicineDetailRow(label = "Dosage / Strength", value = medicine.dosage)
-                        HorizontalDivider(color = Color(0xFFF1F4F8), modifier = Modifier.padding(vertical = 10.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 10.dp))
                     }
 
                     MedicineDetailRow(
@@ -222,17 +226,17 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
                     )
 
                     if (medicine.description.isNotBlank()) {
-                        HorizontalDivider(color = Color(0xFFF1F4F8), modifier = Modifier.padding(vertical = 10.dp))
-                        Text(text = "Description", fontSize = 12.sp, color = Color(0xFF6F7A6E), fontWeight = FontWeight.Medium)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 10.dp))
+                        Text(text = "Description", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = medicine.description, fontSize = 14.sp, color = Color(0xFF0E1D2A), lineHeight = 20.sp)
+                        Text(text = medicine.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 20.sp)
                     }
 
                     if (medicine.howToUse.isNotBlank()) {
-                        HorizontalDivider(color = Color(0xFFF1F4F8), modifier = Modifier.padding(vertical = 10.dp))
-                        Text(text = "How to Use", fontSize = 12.sp, color = Color(0xFF6F7A6E), fontWeight = FontWeight.Medium)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 10.dp))
+                        Text(text = "How to Use", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = medicine.howToUse, fontSize = 14.sp, color = Color(0xFF0E1D2A), lineHeight = 20.sp)
+                        Text(text = medicine.howToUse, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 20.sp)
                     }
                 }
             }
@@ -241,17 +245,17 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
             if (medicine.ingredients.isNotEmpty()) {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "Ingredients", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                        Text(text = "Ingredients", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             medicine.ingredients.forEach { ingredient ->
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFFE8F5E9), RoundedCornerShape(50.dp))
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(50.dp))
                                         .border(1.dp, Color(0xFF006B2C), RoundedCornerShape(50.dp))
                                         .padding(horizontal = 12.dp, vertical = 5.dp)
                                 ) {
@@ -269,9 +273,9 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
 }
 
 @Composable
-private fun MedicineDetailRow(label: String, value: String, valueColor: Color = Color(0xFF0E1D2A)) {
+private fun MedicineDetailRow(label: String, value: String, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(text = label, fontSize = 13.sp, color = Color(0xFF6F7A6E), modifier = Modifier.weight(1f))
+        Text(text = label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
         Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = valueColor)
     }
 }

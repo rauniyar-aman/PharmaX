@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
 import com.example.pharmax.viewmodel.UserViewModel
 import java.util.Calendar
@@ -65,7 +67,9 @@ class DashboardActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            DashboardBody()
+            PharmaXTheme {
+                DashboardBody()
+            }
         }
     }
 }
@@ -125,7 +129,7 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -140,9 +144,9 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
             ) {
                 Column {
                     Text(text = "$greeting, $firstName", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
-                    Text(text = "Your health is our priority today.", fontSize = 13.sp, color = Color(0xFF3F493F))
+                    Text(text = "Your health is our priority today.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications", tint = Color(0xFF0E1D2A), modifier = Modifier.size(26.dp))
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(26.dp))
             }
 
             // ── Search bar ───────────────────────────────────────────────
@@ -150,15 +154,15 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
                 value = "",
                 onValueChange = {},
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                placeholder = { Text("Search medicines, brands...", color = Color(0xFF6F7A6E), fontSize = 14.sp) },
-                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color(0xFF6F7A6E)) },
+                placeholder = { Text("Search medicines, brands...", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp) },
+                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 singleLine = true,
                 shape = RoundedCornerShape(50.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFFBFCABB),
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                     focusedBorderColor = Color(0xFF006B2C),
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface
                 )
             )
 
@@ -176,7 +180,7 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
                     context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
                 }
                 QuickChip(label = "Upload Prescription", icon = Icons.Default.Add) {
-                    Toast.makeText(context, "Upload Prescription coming soon", Toast.LENGTH_SHORT).show()
+                    context.startActivity(Intent(context, UploadPrescriptionActivity::class.java))
                 }
             }
 
@@ -189,7 +193,7 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
                 Text(
                     text = "No categories available yet",
                     fontSize = 13.sp,
-                    color = Color(0xFF6F7A6E),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             } else {
@@ -233,14 +237,14 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
 
 @Composable
 fun SectionHeader(title: String) {
-    Text(text = title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A), modifier = Modifier.padding(horizontal = 16.dp))
+    Text(text = title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(horizontal = 16.dp))
 }
 
 @Composable
 fun QuickChip(label: String, icon: ImageVector, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(50.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 1.dp,
         modifier = Modifier.height(38.dp).clickable { onClick() }
     ) {
@@ -250,7 +254,7 @@ fun QuickChip(label: String, icon: ImageVector, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Icon(imageVector = icon, contentDescription = null, tint = Color(0xFF006B2C), modifier = Modifier.size(16.dp))
-            Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
+            Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -268,7 +272,7 @@ fun CategoryChip(label: String, icon: String, bgColor: Color, iconTint: Color, o
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(text = icon, fontSize = 14.sp)
-            Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
+            Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -291,7 +295,7 @@ fun categoryIconColor(type: String): Color = when (type) {
 fun DashboardBottomNav(activeTab: String = "Home") {
     val context = LocalContext.current
     Row(
-        modifier = Modifier.fillMaxWidth().background(Color.White).padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -308,7 +312,9 @@ fun DashboardBottomNav(activeTab: String = "Home") {
             }
         }
         BottomNavItem(icon = Icons.Default.Description, label = "Prescriptions", isActive = activeTab == "Prescriptions") {
-            Toast.makeText(context, "Prescriptions coming soon", Toast.LENGTH_SHORT).show()
+            if (activeTab != "Prescriptions") {
+                context.startActivity(Intent(context, MyPrescriptionsActivity::class.java))
+            }
         }
         BottomNavItem(icon = Icons.Default.Person, label = "Profile", isActive = activeTab == "Profile") {
             if (activeTab != "Profile") {
@@ -332,12 +338,12 @@ fun BottomNavItem(icon: ImageVector, label: String, isActive: Boolean, onClick: 
                 Icon(imageVector = icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(20.dp))
             }
         } else {
-            Icon(imageVector = icon, contentDescription = label, tint = Color(0xFF6F7A6E), modifier = Modifier.size(24.dp))
+            Icon(imageVector = icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
         }
         Text(
             text = label,
             fontSize = 10.sp,
-            color = if (isActive) Color(0xFF00501F) else Color(0xFF6F7A6E),
+            color = if (isActive) Color(0xFF00501F) else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal
         )
     }

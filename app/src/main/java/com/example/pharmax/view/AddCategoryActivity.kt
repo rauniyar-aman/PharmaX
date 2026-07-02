@@ -33,6 +33,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
 
 class AddCategoryActivity : ComponentActivity() {
@@ -77,7 +79,9 @@ class AddCategoryActivity : ComponentActivity() {
         }
 
         setContent {
-            AddCategoryBody(editCategory = editCategory, onBack = { finish() })
+            PharmaXTheme {
+                AddCategoryBody(editCategory = editCategory, onBack = { finish() })
+            }
         }
     }
 }
@@ -134,13 +138,13 @@ fun AddCategoryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F9FF))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // ── Top bar ───────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -161,7 +165,7 @@ fun AddCategoryScreen(
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                 Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
             }
             Spacer(modifier = Modifier.width(12.dp))
@@ -184,18 +188,18 @@ fun AddCategoryScreen(
             // ── Icon picker card ──────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Category Icon", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                    Text(text = "Category Icon", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Tab toggle
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF1F4F8), RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
                             .padding(3.dp)
                     ) {
                         listOf("Material Symbol", "Emoji").forEachIndexed { idx, label ->
@@ -203,7 +207,7 @@ fun AddCategoryScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .background(
-                                        if (selectedTab == idx) Color.White else Color.Transparent,
+                                        if (selectedTab == idx) MaterialTheme.colorScheme.surface else Color.Transparent,
                                         RoundedCornerShape(6.dp)
                                     )
                                     .clickable { selectedTab = idx }
@@ -214,7 +218,7 @@ fun AddCategoryScreen(
                                     text = label,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = if (selectedTab == idx) Color(0xFF006B2C) else Color(0xFF6F7A6E)
+                                    color = if (selectedTab == idx) Color(0xFF006B2C) else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -235,11 +239,11 @@ fun AddCategoryScreen(
                                             .size(72.dp)
                                             .border(
                                                 width = if (selectedIcon == icon) 2.dp else 1.dp,
-                                                color = if (selectedIcon == icon) Color(0xFF006B2C) else Color(0xFFDDE1E7),
+                                                color = if (selectedIcon == icon) Color(0xFF006B2C) else MaterialTheme.colorScheme.outline,
                                                 shape = RoundedCornerShape(10.dp)
                                             )
                                             .background(
-                                                if (selectedIcon == icon) Color(0xFFE8F5E9) else Color.White,
+                                                if (selectedIcon == icon) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surface,
                                                 RoundedCornerShape(10.dp)
                                             )
                                             .clickable { selectedIcon = icon },
@@ -261,33 +265,33 @@ fun AddCategoryScreen(
             // ── Form card ─────────────────────────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
                     // Category Name
-                    Text(text = "Category Name", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
+                    Text(text = "Category Name", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = categoryName,
                         onValueChange = { categoryName = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g. Pain Relief", color = Color(0xFF9EA7A0)) },
+                        placeholder = { Text("e.g. Pain Relief", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                             focusedIndicatorColor = Color(0xFF006B2C),
-                            unfocusedIndicatorColor = Color(0xFFDDE1E7)
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
                         )
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
                     // Category Type
-                    Text(text = "Category Type", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
+                    Text(text = "Category Type", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -297,7 +301,7 @@ fun AddCategoryScreen(
                             Box(
                                 modifier = Modifier
                                     .background(
-                                        if (selectedType == type) Color(0xFF00501F) else Color(0xFFF1F4F8),
+                                        if (selectedType == type) Color(0xFF00501F) else MaterialTheme.colorScheme.outlineVariant,
                                         RoundedCornerShape(50.dp)
                                     )
                                     .clickable { selectedType = type }
@@ -307,7 +311,7 @@ fun AddCategoryScreen(
                                     text = type,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = if (selectedType == type) Color.White else Color(0xFF6F7A6E)
+                                    color = if (selectedType == type) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -316,19 +320,19 @@ fun AddCategoryScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     // Description
-                    Text(text = "Description", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
+                    Text(text = "Description", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
                         modifier = Modifier.fillMaxWidth().height(110.dp),
-                        placeholder = { Text("Brief summary for this category...", color = Color(0xFF9EA7A0)) },
+                        placeholder = { Text("Brief summary for this category...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         shape = RoundedCornerShape(8.dp),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                             focusedIndicatorColor = Color(0xFF006B2C),
-                            unfocusedIndicatorColor = Color(0xFFDDE1E7)
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
                         )
                     )
 
@@ -340,8 +344,8 @@ fun AddCategoryScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Is Active", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
-                            Text(text = "Visible to customers in the storefront", fontSize = 12.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Is Active", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                            Text(text = "Visible to customers in the storefront", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(
                             checked = isActive,
@@ -356,12 +360,12 @@ fun AddCategoryScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "👁", fontSize = 16.sp)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "LIVE PREVIEW", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF6F7A6E), letterSpacing = 1.sp)
+                Text(text = "LIVE PREVIEW", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
             }
 
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(
@@ -374,7 +378,7 @@ fun AddCategoryScreen(
                         Row(
                             modifier = Modifier
                                 .background(
-                                    if (isActive) Color(0xFFE8F5E9) else Color(0xFFFFEDED),
+                                    if (isActive) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.errorContainer,
                                     RoundedCornerShape(50.dp)
                                 )
                                 .padding(horizontal = 10.dp, vertical = 4.dp),
@@ -384,7 +388,7 @@ fun AddCategoryScreen(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .background(
-                                        if (isActive) Color(0xFF006B2C) else Color(0xFFBA1A1A),
+                                        if (isActive) Color(0xFF006B2C) else MaterialTheme.colorScheme.error,
                                         CircleShape
                                     )
                             )
@@ -393,7 +397,7 @@ fun AddCategoryScreen(
                                 text = if (isActive) "ACTIVE" else "INACTIVE",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isActive) Color(0xFF006B2C) else Color(0xFFBA1A1A)
+                                color = if (isActive) Color(0xFF006B2C) else MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -403,7 +407,7 @@ fun AddCategoryScreen(
                     Box(
                         modifier = Modifier
                             .size(72.dp)
-                            .background(Color(0xFFE3F2FD), CircleShape),
+                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(text = selectedIcon, fontSize = 32.sp)
@@ -415,20 +419,20 @@ fun AddCategoryScreen(
                         text = categoryName.ifBlank { "New Category" },
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0E1D2A)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(text = "0 medicines available", fontSize = 13.sp, color = Color(0xFF6F7A6E))
+                    Text(text = "0 medicines available", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFFF1F4F8), RoundedCornerShape(50.dp))
+                            .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(50.dp))
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "Browse Medicines", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF0E1D2A))
+                        Text(text = "Browse Medicines", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
@@ -436,7 +440,7 @@ fun AddCategoryScreen(
             // ── Clinical approval info card ────────────────────────────────
             Card(
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0FAF4)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
@@ -451,7 +455,7 @@ fun AddCategoryScreen(
                         Text(
                             text = "New categories are automatically audited by the compliance engine to ensure clinical accuracy before being pushed to global pharmacy nodes.",
                             fontSize = 12.sp,
-                            color = Color(0xFF4A6659),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 17.sp
                         )
                     }
@@ -470,10 +474,10 @@ fun AddCategoryScreen(
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color(0xFF0E1D2A)
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
                     ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDDE1E7))
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Text(text = "Discard", fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 }

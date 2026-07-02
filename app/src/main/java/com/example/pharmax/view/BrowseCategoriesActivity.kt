@@ -32,6 +32,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
 
 class BrowseCategoriesActivity : ComponentActivity() {
@@ -59,16 +61,18 @@ class BrowseCategoriesActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            BrowseCategoriesBody(
-                onCategoryClick = { category ->
-                    val intent = Intent(this, MedicineListActivity::class.java)
-                    intent.putExtra("categoryId", category.categoryId)
-                    intent.putExtra("categoryName", category.name)
-                    intent.putExtra("categoryIcon", category.icon)
-                    startActivity(intent)
-                },
-                onBack = { finish() }
-            )
+            PharmaXTheme {
+                BrowseCategoriesBody(
+                    onCategoryClick = { category ->
+                        val intent = Intent(this, MedicineListActivity::class.java)
+                        intent.putExtra("categoryId", category.categoryId)
+                        intent.putExtra("categoryName", category.name)
+                        intent.putExtra("categoryIcon", category.icon)
+                        startActivity(intent)
+                    },
+                    onBack = { finish() }
+                )
+            }
         }
     }
 }
@@ -112,7 +116,7 @@ fun BrowseCategoriesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F9FF))
+            .background(MaterialTheme.colorScheme.background)
             .padding(innerPadding)
     ) {
 
@@ -120,7 +124,7 @@ fun BrowseCategoriesScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -139,7 +143,7 @@ fun BrowseCategoriesScreen(
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                 Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
             }
         }
@@ -149,15 +153,15 @@ fun BrowseCategoriesScreen(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            placeholder = { Text("Search categories...", color = Color(0xFF6F7A6E), fontSize = 14.sp) },
-            leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color(0xFF6F7A6E)) },
+            placeholder = { Text("Search categories...", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp) },
+            leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
             singleLine = true,
             shape = RoundedCornerShape(50.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color(0xFFBFCABB),
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                 focusedBorderColor = Color(0xFF006B2C),
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface
             )
         )
 
@@ -170,7 +174,7 @@ fun BrowseCategoriesScreen(
             Text(
                 text = "${filtered.size} ${if (filtered.size == 1) "category" else "categories"} found",
                 fontSize = 13.sp,
-                color = Color(0xFF6F7A6E)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -191,7 +195,7 @@ fun BrowseCategoriesScreen(
                         Text(
                             text = if (searchQuery.isBlank()) "No categories available" else "No results for \"$searchQuery\"",
                             fontSize = 15.sp,
-                            color = Color(0xFF6F7A6E)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -231,7 +235,7 @@ private fun CategoryCard(category: CategoryModel, onClick: () -> Unit) {
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth().clickable { onClick() }
     ) {
@@ -254,7 +258,7 @@ private fun CategoryCard(category: CategoryModel, onClick: () -> Unit) {
                 text = category.name,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF0E1D2A),
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2
             )
 
@@ -273,7 +277,7 @@ private fun CategoryCard(category: CategoryModel, onClick: () -> Unit) {
             Text(
                 text = "${category.medicineCount} medicines",
                 fontSize = 11.sp,
-                color = Color(0xFF6F7A6E)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

@@ -37,6 +37,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
 
 class AdminCategoryManagement : ComponentActivity() {
@@ -67,7 +69,9 @@ class AdminCategoryManagement : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AdminCategoryManagementBody()
+            PharmaXTheme {
+                AdminCategoryManagementBody()
+            }
         }
     }
 }
@@ -150,22 +154,22 @@ fun AdminCategoryManagementScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F9FF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(text = "Medicine Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C), modifier = Modifier.weight(1f))
                 Box {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0E1D2A), modifier = Modifier.size(24.dp))
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                     Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -192,7 +196,7 @@ fun AdminCategoryManagementScreen(
                     ) {
                         AdminStatCard(label = "Total Categories", value = "${categories.size}", valueColor = Color(0xFF006B2C))
                         AdminStatCard(label = "Active Types", value = "$totalActive", valueColor = Color(0xFF0051D5))
-                        AdminStatCard(label = "Total SKUs", value = "$totalMedicines", valueColor = Color(0xFF0E1D2A))
+                        AdminStatCard(label = "Total SKUs", value = "$totalMedicines", valueColor = MaterialTheme.colorScheme.onSurface)
                     }
                 }
 
@@ -222,14 +226,14 @@ fun AdminCategoryManagementScreen(
                         onValueChange = { searchQuery = it },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         placeholder = { Text("Search categories...") },
-                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color(0xFF6F7A6E)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         shape = RoundedCornerShape(50.dp),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                             focusedIndicatorColor = Color(0xFF006B2C),
-                            unfocusedIndicatorColor = Color(0xFF6F7A6E)
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -278,9 +282,9 @@ fun AdminCategoryManagementScreen(
                         ) {
                             Text(text = "📂", fontSize = 48.sp)
                             Spacer(modifier = Modifier.height(12.dp))
-                            Text(text = "No categories yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0E1D2A))
+                            Text(text = "No categories yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = "Tap + to add your first category", fontSize = 13.sp, color = Color(0xFF6F7A6E))
+                            Text(text = "Tap + to add your first category", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -305,11 +309,11 @@ fun AdminCategoryManagementScreen(
 fun AdminStatCard(label: String, value: String, valueColor: Color) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
-            Text(text = label, fontSize = 12.sp, color = Color(0xFF6F7A6E))
+            Text(text = label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = value, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = valueColor)
         }
@@ -321,7 +325,7 @@ fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .background(
-                color = if (isSelected) Color(0xFF00501F) else Color.White,
+                color = if (isSelected) Color(0xFF00501F) else MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(50.dp)
             )
             .clickable { onClick() }
@@ -331,7 +335,7 @@ fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
             text = label,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = if (isSelected) Color.White else Color(0xFF0E1D2A)
+            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -346,7 +350,7 @@ fun CategoryListItem(
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -357,7 +361,7 @@ fun CategoryListItem(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .background(Color(0xFFE3F2FD), CircleShape),
+                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = category.icon, fontSize = 22.sp)
@@ -365,11 +369,11 @@ fun CategoryListItem(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = category.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0E1D2A))
+                        Text(text = category.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .background(Color(0xFFE3EEFF), RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(text = category.type, fontSize = 10.sp, color = Color(0xFF0051D5), fontWeight = FontWeight.SemiBold)
@@ -377,13 +381,13 @@ fun CategoryListItem(
                     }
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = category.slug, fontSize = 11.sp, color = Color(0xFF6F7A6E))
+                        Text(text = category.slug, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "•", fontSize = 11.sp, color = Color(0xFF6F7A6E))
+                        Text(text = "•", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
-                                .background(Color(0xFFE8F5E9), RoundedCornerShape(50.dp))
+                                .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(50.dp))
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text(text = "${category.medicineCount} medicines", fontSize = 11.sp, color = Color(0xFF006B2C), fontWeight = FontWeight.Medium)
@@ -410,9 +414,9 @@ fun CategoryListItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { onDelete() }
                 ) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFBA1A1A), modifier = Modifier.size(16.dp))
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Delete", fontSize = 13.sp, color = Color(0xFFBA1A1A), fontWeight = FontWeight.Medium)
+                    Text(text = "Delete", fontSize = 13.sp, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium)
                 }
             }
         }

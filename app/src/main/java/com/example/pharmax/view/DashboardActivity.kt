@@ -48,17 +48,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.pharmax.model.CategoryModel
 import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
+import com.example.pharmax.viewmodel.NotificationViewModel
 import com.example.pharmax.viewmodel.UserViewModel
 import java.util.Calendar
 
@@ -79,15 +83,21 @@ fun DashboardBody() {
     val context = LocalContext.current
     val vm: UserViewModel = viewModel()
     val categoryVm: CategoryViewModel = viewModel()
+    val notificationVm: NotificationViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val user by vm.user.collectAsState()
     val isLoggedOut by vm.isLoggedOut.collectAsState()
     val categories by categoryVm.categories.collectAsState()
+    val unreadCount by notificationVm.unreadCount.collectAsState()
 
     LaunchedEffect(Unit) {
         vm.loadCurrentUser()
         categoryVm.loadCategories()
+    }
+
+    LaunchedEffect(user) {
+        user?.uid?.let { uid -> if (uid.isNotBlank()) notificationVm.loadNotifications(uid) }
     }
 
     LaunchedEffect(message) {
@@ -107,12 +117,23 @@ fun DashboardBody() {
 
     DashboardScreen(
         firstName = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
-        categories = categories.filter { it.isActive }
+        categories = categories.filter { it.isActive },
+        unreadNotificationCount = unreadCount,
+        onNotificationsClick = {
+            val i = Intent(context, NotificationCenterActivity::class.java)
+            i.putExtra("recipientId", user?.uid ?: "")
+            context.startActivity(i)
+        }
     )
 }
 
 @Composable
-fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> = emptyList()) {
+fun DashboardScreen(
+    firstName: String = "User",
+    categories: List<CategoryModel> = emptyList(),
+    unreadNotificationCount: Int = 0,
+    onNotificationsClick: () -> Unit = {}
+) {
     val context = LocalContext.current
 
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -146,7 +167,17 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
                     Text(text = "$greeting, $firstName", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
                     Text(text = "Your health is our priority today.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(26.dp))
+                Box {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(26.dp).clickable { onNotificationsClick() }
+                    )
+                    if (unreadNotificationCount > 0) {
+                        Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                    }
+                }
             }
 
             // ── Search bar ───────────────────────────────────────────────
@@ -205,8 +236,6 @@ fun DashboardScreen(firstName: String = "User", categories: List<CategoryModel> 
                         CategoryChip(
                             label = category.name,
                             icon = category.icon,
-                            bgColor = categoryBgColor(category.type),
-                            iconTint = categoryIconColor(category.type),
                             onClick = {
                                 val intent = Intent(context, MedicineListActivity::class.java)
                                 intent.putExtra("categoryId", category.categoryId)
@@ -260,10 +289,10 @@ fun QuickChip(label: String, icon: ImageVector, onClick: () -> Unit) {
 }
 
 @Composable
-fun CategoryChip(label: String, icon: String, bgColor: Color, iconTint: Color, onClick: () -> Unit = {}) {
+fun CategoryChip(label: String, icon: String, onClick: () -> Unit = {}) {
     Surface(
         shape = RoundedCornerShape(50.dp),
-        color = bgColor,
+        color = Color(0xFFE8F5E9),
         modifier = Modifier.height(36.dp).clickable { onClick() }
     ) {
         Row(
@@ -277,23 +306,14 @@ fun CategoryChip(label: String, icon: String, bgColor: Color, iconTint: Color, o
     }
 }
 
-fun categoryBgColor(type: String): Color = when (type) {
-    "Prescription" -> Color(0xFFFFEDED)
-    "Supplement"   -> Color(0xFFFFF9C4)
-    "Specialized"  -> Color(0xFFE3EFFF)
-    else           -> Color(0xFFE8F5E9)
-}
-
-fun categoryIconColor(type: String): Color = when (type) {
-    "Prescription" -> Color(0xFFBA1A1A)
-    "Supplement"   -> Color(0xFFF9A825)
-    "Specialized"  -> Color(0xFF0051D5)
-    else           -> Color(0xFF006B2C)
-}
-
 @Composable
 fun DashboardBottomNav(activeTab: String = "Home") {
     val context = LocalContext.current
+    val userVm: UserViewModel = viewModel()
+    val user by userVm.user.collectAsState()
+
+    LaunchedEffect(Unit) { userVm.loadCurrentUser() }
+
     Row(
         modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround,
@@ -308,7 +328,7 @@ fun DashboardBottomNav(activeTab: String = "Home") {
         }
         BottomNavItem(icon = Icons.Default.Medication, label = "Medicines", isActive = activeTab == "Medicines") {
             if (activeTab != "Medicines") {
-                context.startActivity(Intent(context, BrowseCategoriesActivity::class.java))
+                context.startActivity(Intent(context, BrowseAllMedicinesActivity::class.java))
             }
         }
         BottomNavItem(icon = Icons.Default.Description, label = "Prescriptions", isActive = activeTab == "Prescriptions") {
@@ -316,7 +336,7 @@ fun DashboardBottomNav(activeTab: String = "Home") {
                 context.startActivity(Intent(context, MyPrescriptionsActivity::class.java))
             }
         }
-        BottomNavItem(icon = Icons.Default.Person, label = "Profile", isActive = activeTab == "Profile") {
+        BottomNavItem(icon = Icons.Default.Person, label = "Profile", isActive = activeTab == "Profile", photoUrl = user?.profileImageUrl ?: "") {
             if (activeTab != "Profile") {
                 context.startActivity(Intent(context, ProfileActivity::class.java))
             }
@@ -325,7 +345,7 @@ fun DashboardBottomNav(activeTab: String = "Home") {
 }
 
 @Composable
-fun BottomNavItem(icon: ImageVector, label: String, isActive: Boolean, onClick: () -> Unit) {
+fun BottomNavItem(icon: ImageVector, label: String, isActive: Boolean, photoUrl: String = "", onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }
@@ -335,10 +355,28 @@ fun BottomNavItem(icon: ImageVector, label: String, isActive: Boolean, onClick: 
                 modifier = Modifier.size(36.dp).background(Color(0xFF00501F), RoundedCornerShape(50.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(20.dp))
+                if (photoUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = label,
+                        modifier = Modifier.size(26.dp).clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(imageVector = icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(20.dp))
+                }
             }
         } else {
-            Icon(imageVector = icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+            if (photoUrl.isNotBlank()) {
+                AsyncImage(
+                    model = photoUrl,
+                    contentDescription = label,
+                    modifier = Modifier.size(24.dp).clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(imageVector = icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+            }
         }
         Text(
             text = label,

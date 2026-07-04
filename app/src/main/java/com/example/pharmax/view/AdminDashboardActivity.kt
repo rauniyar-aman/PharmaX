@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,16 +57,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.model.PrescriptionModel
 import com.example.pharmax.ui.theme.PharmaXTheme
+import com.example.pharmax.viewmodel.ADMIN_NOTIFICATION_BUCKET
 import com.example.pharmax.viewmodel.MedicineViewModel
+import com.example.pharmax.viewmodel.NotificationViewModel
 import com.example.pharmax.viewmodel.PrescriptionViewModel
 import com.example.pharmax.viewmodel.UserViewModel
+import coil.compose.AsyncImage
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
 
 class AdminDashboardActivity : ComponentActivity() {
@@ -86,17 +95,20 @@ fun AdminDashboardBody() {
     val vm: MedicineViewModel = viewModel()
     val userVm: UserViewModel = viewModel()
     val prescriptionVm: PrescriptionViewModel = viewModel()
+    val notificationVm: NotificationViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val medicines by vm.medicines.collectAsState()
     val isLoggedOut by userVm.isLoggedOut.collectAsState()
     val adminUser by userVm.user.collectAsState()
     val prescriptions by prescriptionVm.prescriptions.collectAsState()
+    val unreadCount by notificationVm.unreadCount.collectAsState()
 
     LaunchedEffect(Unit) {
         vm.loadMedicines()
         userVm.loadCurrentUser()
         prescriptionVm.loadAllPrescriptions()
+        notificationVm.loadNotifications(ADMIN_NOTIFICATION_BUCKET)
     }
 
     LaunchedEffect(message) {
@@ -114,14 +126,18 @@ fun AdminDashboardBody() {
         }
     }
 
-    val lowStockMedicines = medicines.filter { it.stock in 0..10 }
     val pendingPrescriptions = prescriptions.filter { it.status == "Pending" }
 
     AdminDashboardScreen(
         adminName = adminUser?.fullName ?: "Admin",
         adminEmail = adminUser?.email ?: "",
-        lowStockMedicines = lowStockMedicines,
-        lowStockCount = lowStockMedicines.size,
+        adminPhotoUrl = adminUser?.profileImageUrl ?: "",
+        unreadNotificationCount = unreadCount,
+        onNotificationsClick = {
+            val i = Intent(context, NotificationCenterActivity::class.java)
+            i.putExtra("recipientId", ADMIN_NOTIFICATION_BUCKET)
+            context.startActivity(i)
+        },
         totalMedicineCount = medicines.size,
         pendingPrescriptions = pendingPrescriptions,
         pendingPrescriptionCount = pendingPrescriptions.size,
@@ -130,11 +146,14 @@ fun AdminDashboardBody() {
         onNavigateMedicines = { context.startActivity(Intent(context, AdminMedicineManagement::class.java)) },
         onNavigateCategories = { context.startActivity(Intent(context, AdminCategoryManagement::class.java)) },
         onNavigatePrescriptions = { context.startActivity(Intent(context, AdminPrescriptionManagement::class.java)) },
+        onNavigateOrders = { context.startActivity(Intent(context, AdminOrderManagement::class.java)) },
         onPrescriptionClick = { prescription ->
             val intent = Intent(context, AdminPrescriptionDetailActivity::class.java)
             intent.putExtra("prescriptionId", prescription.prescriptionId)
+            intent.putExtra("userId", prescription.userId)
             intent.putExtra("userName", prescription.userName)
             intent.putExtra("userPhone", prescription.userPhone)
+            intent.putExtra("name", prescription.name)
             intent.putExtra("medicineName", prescription.medicineName)
             intent.putExtra("imageUrl", prescription.imageUrl)
             intent.putExtra("notes", prescription.notes)
@@ -143,6 +162,7 @@ fun AdminDashboardBody() {
             intent.putExtra("uploadedAt", prescription.uploadedAt)
             context.startActivity(intent)
         },
+        onNavigateProfile = { context.startActivity(Intent(context, AdminProfileActivity::class.java)) },
         onLogout = { userVm.logOut() }
     )
 }
@@ -151,8 +171,9 @@ fun AdminDashboardBody() {
 fun AdminDashboardScreen(
     adminName: String = "Admin",
     adminEmail: String = "",
-    lowStockMedicines: List<MedicineModel> = emptyList(),
-    lowStockCount: Int = 0,
+    adminPhotoUrl: String = "",
+    unreadNotificationCount: Int = 0,
+    onNotificationsClick: () -> Unit = {},
     totalMedicineCount: Int = 0,
     pendingPrescriptions: List<PrescriptionModel> = emptyList(),
     pendingPrescriptionCount: Int = 0,
@@ -161,7 +182,9 @@ fun AdminDashboardScreen(
     onNavigateMedicines: () -> Unit = {},
     onNavigateCategories: () -> Unit = {},
     onNavigatePrescriptions: () -> Unit = {},
+    onNavigateOrders: () -> Unit = {},
     onPrescriptionClick: (PrescriptionModel) -> Unit = {},
+    onNavigateProfile: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -173,10 +196,14 @@ fun AdminDashboardScreen(
             AdminSideDrawer(
                 adminName = adminName,
                 adminEmail = adminEmail,
+                adminPhotoUrl = adminPhotoUrl,
+                activeItem = "Dashboard",
                 onClose = { scope.launch { drawerState.close() } },
+                onNavigateDashboard = { scope.launch { drawerState.close() } },
                 onNavigateMedicines = { scope.launch { drawerState.close() }; onNavigateMedicines() },
                 onNavigateCategories = { scope.launch { drawerState.close() }; onNavigateCategories() },
                 onNavigatePrescriptions = { scope.launch { drawerState.close() }; onNavigatePrescriptions() },
+                onNavigateOrders = { scope.launch { drawerState.close() }; onNavigateOrders() },
                 onLogout = { scope.launch { drawerState.close() }; onLogout() }
             )
         }
@@ -214,16 +241,23 @@ fun AdminDashboardScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Box {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
-                    Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp).clickable { onNotificationsClick() }
+                    )
+                    if (unreadNotificationCount > 0) {
+                        Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Box(
-                    modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                }
+                AvatarCircle(
+                    photoUrl = adminPhotoUrl,
+                    fallbackText = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
+                    size = 36.dp,
+                    modifier = Modifier.clickable { onNavigateProfile() }
+                )
             }
 
             Column(
@@ -237,17 +271,10 @@ fun AdminDashboardScreen(
                 // ── 3 Stat cards ──────────────────────────────────────────
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AdminStatDashCard(
-                        label = "Pending Rx",
+                        label = "Pending Prescription",
                         value = "$pendingPrescriptionCount",
                         color = Color(0xFFE65100),
                         bgColor = Color(0xFFFFF3E0),
-                        modifier = Modifier.weight(1f)
-                    )
-                    AdminStatDashCard(
-                        label = "Low Stock",
-                        value = "$lowStockCount",
-                        color = Color(0xFFBA1A1A),
-                        bgColor = Color(0xFFFFEDED),
                         modifier = Modifier.weight(1f)
                     )
                     AdminStatDashCard(
@@ -290,27 +317,6 @@ fun AdminDashboardScreen(
                                     onClick = { onPrescriptionClick(prescription) }
                                 )
                                 if (index < pendingPrescriptions.take(3).lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            }
-                        }
-                    }
-                }
-
-                // ── Low Stock Medicines ───────────────────────────────────
-                AdminSectionHeader(title = "Low Stock Medicines")
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column {
-                        if (lowStockMedicines.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
-                                Text(text = "No low stock alerts", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        } else {
-                            lowStockMedicines.take(5).forEachIndexed { index, medicine ->
-                                LowStockRow(name = medicine.name, stock = medicine.stock)
-                                if (index < lowStockMedicines.take(5).lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             }
                         }
                     }
@@ -359,17 +365,22 @@ fun AdminDashboardScreen(
 fun AdminSideDrawer(
     adminName: String = "Admin",
     adminEmail: String = "",
+    adminPhotoUrl: String = "",
+    activeItem: String = "Dashboard",
     onClose: () -> Unit = {},
+    onNavigateDashboard: () -> Unit = {},
     onNavigateMedicines: () -> Unit = {},
     onNavigateCategories: () -> Unit = {},
     onNavigatePrescriptions: () -> Unit = {},
+    onNavigateOrders: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val navItems = listOf(
-        Triple("Dashboard", Icons.Default.Dashboard, true),
-        Triple("Medicines", Icons.Default.Medication, false),
-        Triple("Categories", Icons.Default.Category, false),
-        Triple("Prescriptions", Icons.Default.Description, false)
+        Triple("Dashboard", Icons.Default.Dashboard, activeItem == "Dashboard"),
+        Triple("Medicines", Icons.Default.Medication, activeItem == "Medicines"),
+        Triple("Categories", Icons.Default.Category, activeItem == "Categories"),
+        Triple("Prescriptions", Icons.Default.Description, activeItem == "Prescriptions"),
+        Triple("Orders", Icons.Default.ShoppingCart, activeItem == "Orders")
     )
 
     Column(
@@ -386,16 +397,29 @@ fun AdminSideDrawer(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier.size(40.dp).background(Color(0xFF006B2C), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
+            AvatarCircle(
+                photoUrl = adminPhotoUrl,
+                fallbackText = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
+                size = 40.dp,
+                fontSize = 16.sp
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = adminName, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = adminEmail, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = adminName,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = adminEmail,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
             Icon(
                 imageVector = Icons.Default.Close,
@@ -416,9 +440,11 @@ fun AdminSideDrawer(
                 isActive = isActive,
                 onClick = {
                     when (label) {
+                        "Dashboard" -> onNavigateDashboard()
                         "Medicines" -> onNavigateMedicines()
                         "Categories" -> onNavigateCategories()
                         "Prescriptions" -> onNavigatePrescriptions()
+                        "Orders" -> onNavigateOrders()
                         else -> onClose()
                     }
                 }
@@ -526,20 +552,28 @@ fun PrescriptionDashRow(customerName: String, medicineName: String, onClick: () 
 }
 
 @Composable
-fun LowStockRow(name: String, stock: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+fun AvatarCircle(
+    photoUrl: String,
+    fallbackText: String,
+    size: Dp,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = Color(0xFF006B2C),
+    textColor: Color = Color.White,
+    fontSize: TextUnit = 14.sp
+) {
+    Box(
+        modifier = modifier.size(size).background(backgroundColor, CircleShape),
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = "💊", fontSize = 18.sp)
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(text = name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-        Box(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(50.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text(text = "Stock: $stock", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
+        if (photoUrl.isNotBlank()) {
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = "Profile Picture",
+                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text(text = fallbackText, fontSize = fontSize, fontWeight = FontWeight.Bold, color = textColor)
         }
     }
 }
@@ -547,10 +581,5 @@ fun LowStockRow(name: String, stock: Int) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun AdminDashboardPreview() {
-    val sampleLowStock = listOf(
-        MedicineModel(name = "Amoxicillin Syrup", stock = 8),
-        MedicineModel(name = "Metformin 500mg", stock = 3),
-        MedicineModel(name = "Insulin Injection", stock = 0)
-    )
-    AdminDashboardScreen(lowStockMedicines = sampleLowStock, lowStockCount = 3)
+    AdminDashboardScreen(totalMedicineCount = 3)
 }

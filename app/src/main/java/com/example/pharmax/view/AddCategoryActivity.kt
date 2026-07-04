@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -55,9 +58,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.content.Intent
 import com.example.pharmax.model.CategoryModel
 import com.example.pharmax.ui.theme.PharmaXTheme
+import com.example.pharmax.viewmodel.ADMIN_NOTIFICATION_BUCKET
 import com.example.pharmax.viewmodel.CategoryViewModel
+import com.example.pharmax.viewmodel.NotificationViewModel
+import com.example.pharmax.viewmodel.UserViewModel
 
 class AddCategoryActivity : ComponentActivity() {
 
@@ -71,10 +78,8 @@ class AddCategoryActivity : ComponentActivity() {
                 name = intent.getStringExtra("name") ?: "",
                 description = intent.getStringExtra("description") ?: "",
                 icon = intent.getStringExtra("icon") ?: "💊",
-                type = intent.getStringExtra("type") ?: "OTC",
                 isActive = intent.getBooleanExtra("isActive", true),
-                slug = intent.getStringExtra("slug") ?: "",
-                medicineCount = intent.getIntExtra("medicineCount", 0)
+                slug = intent.getStringExtra("slug") ?: ""
             )
         }
 
@@ -90,8 +95,17 @@ class AddCategoryActivity : ComponentActivity() {
 fun AddCategoryBody(editCategory: CategoryModel? = null, onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val vm: CategoryViewModel = viewModel()
+    val userVm: UserViewModel = viewModel()
+    val notificationVm: NotificationViewModel = viewModel()
     val message by vm.message.collectAsState()
     val isLoading by vm.loading.collectAsState()
+    val adminUser by userVm.user.collectAsState()
+    val unreadCount by notificationVm.unreadCount.collectAsState()
+
+    LaunchedEffect(Unit) {
+        userVm.loadCurrentUser()
+        notificationVm.loadNotifications(ADMIN_NOTIFICATION_BUCKET)
+    }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -103,11 +117,19 @@ fun AddCategoryBody(editCategory: CategoryModel? = null, onBack: () -> Unit = {}
     AddCategoryScreen(
         editCategory = editCategory,
         isLoading = isLoading,
-        onSave = { name, description, icon, type, active ->
+        adminName = adminUser?.fullName ?: "Admin",
+        adminPhotoUrl = adminUser?.profileImageUrl ?: "",
+        unreadNotificationCount = unreadCount,
+        onNotificationsClick = {
+            val i = Intent(context, NotificationCenterActivity::class.java)
+            i.putExtra("recipientId", ADMIN_NOTIFICATION_BUCKET)
+            context.startActivity(i)
+        },
+        onSave = { name, description, icon, active ->
             if (editCategory != null) {
-                vm.updateCategory(editCategory.copy(name = name, description = description, icon = icon, type = type, isActive = active)) { onBack() }
+                vm.updateCategory(editCategory.copy(name = name, description = description, icon = icon, isActive = active)) { onBack() }
             } else {
-                vm.addCategory(name, description, icon, type, active) { onBack() }
+                vm.addCategory(name, description, icon, active) { onBack() }
             }
         },
         onBack = onBack
@@ -118,18 +140,20 @@ fun AddCategoryBody(editCategory: CategoryModel? = null, onBack: () -> Unit = {}
 fun AddCategoryScreen(
     editCategory: CategoryModel? = null,
     isLoading: Boolean = false,
-    onSave: (String, String, String, String, Boolean) -> Unit = { _, _, _, _, _ -> },
+    adminName: String = "Admin",
+    adminPhotoUrl: String = "",
+    unreadNotificationCount: Int = 0,
+    onNotificationsClick: () -> Unit = {},
+    onSave: (String, String, String, Boolean) -> Unit = { _, _, _, _ -> },
     onBack: () -> Unit = {}
 ) {
     val materialIcons = listOf("💊", "❤️", "🦠", "🧪", "🩹", "⚕️")
     val emojiIcons = listOf("🌿", "🩺", "🩻", "💉", "🔬", "🧬")
-    val typeOptions = listOf("OTC", "Prescription", "Supplement", "Specialized")
 
     var selectedTab by remember { mutableStateOf(0) }
     var selectedIcon by remember { mutableStateOf(editCategory?.icon ?: "💊") }
     var categoryName by remember { mutableStateOf(editCategory?.name ?: "") }
     var description by remember { mutableStateOf(editCategory?.description ?: "") }
-    var selectedType by remember { mutableStateOf(editCategory?.type ?: "OTC") }
     var isActive by remember { mutableStateOf(editCategory?.isActive ?: true) }
 
     val currentIcons = if (selectedTab == 0) materialIcons else emojiIcons
@@ -139,6 +163,7 @@ fun AddCategoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         // ── Top bar ───────────────────────────────────────────────────────
         Row(
@@ -165,16 +190,22 @@ fun AddCategoryScreen(
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
-                Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp).clickable { onNotificationsClick() }
+                )
+                if (unreadNotificationCount > 0) {
+                    Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Box(
-                modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
+            AvatarCircle(
+                photoUrl = adminPhotoUrl,
+                fallbackText = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
+                size = 36.dp
+            )
         }
 
         Column(
@@ -290,35 +321,6 @@ fun AddCategoryScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Category Type
-                    Text(text = "Category Type", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        typeOptions.forEach { type ->
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        if (selectedType == type) Color(0xFF00501F) else MaterialTheme.colorScheme.outlineVariant,
-                                        RoundedCornerShape(50.dp)
-                                    )
-                                    .clickable { selectedType = type }
-                                    .padding(horizontal = 12.dp, vertical = 7.dp)
-                            ) {
-                                Text(
-                                    text = type,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (selectedType == type) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
                     // Description
                     Text(text = "Description", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(6.dp))
@@ -356,114 +358,6 @@ fun AddCategoryScreen(
                 }
             }
 
-            // ── Live preview ──────────────────────────────────────────────
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "👁", fontSize = 16.sp)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "LIVE PREVIEW", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
-            }
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Row(
-                            modifier = Modifier
-                                .background(
-                                    if (isActive) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.errorContainer,
-                                    RoundedCornerShape(50.dp)
-                                )
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .background(
-                                        if (isActive) Color(0xFF006B2C) else MaterialTheme.colorScheme.error,
-                                        CircleShape
-                                    )
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = if (isActive) "ACTIVE" else "INACTIVE",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isActive) Color(0xFF006B2C) else MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = selectedIcon, fontSize = 32.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = categoryName.ifBlank { "New Category" },
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(text = "0 medicines available", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(50.dp))
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "Browse Medicines", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-            }
-
-            // ── Clinical approval info card ────────────────────────────────
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Text(text = "🛡", fontSize = 20.sp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(text = "Clinical Approval Required", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF006B2C))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "New categories are automatically audited by the compliance engine to ensure clinical accuracy before being pushed to global pharmacy nodes.",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 17.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // ── Bottom action buttons ─────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -483,7 +377,7 @@ fun AddCategoryScreen(
                 }
 
                 ElevatedButton(
-                    onClick = { onSave(categoryName, description, selectedIcon, selectedType, isActive) },
+                    onClick = { onSave(categoryName, description, selectedIcon, isActive) },
                     modifier = Modifier.weight(1f).height(52.dp),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.elevatedButtonColors(

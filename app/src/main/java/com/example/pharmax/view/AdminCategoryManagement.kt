@@ -35,21 +35,25 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,8 +65,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.ui.theme.PharmaXTheme
+import com.example.pharmax.viewmodel.ADMIN_NOTIFICATION_BUCKET
 import com.example.pharmax.viewmodel.CategoryViewModel
+import com.example.pharmax.viewmodel.MedicineViewModel
+import com.example.pharmax.viewmodel.NotificationViewModel
+import com.example.pharmax.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
 
 class AdminCategoryManagement : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,12 +90,24 @@ class AdminCategoryManagement : ComponentActivity() {
 fun AdminCategoryManagementBody() {
     val context = LocalContext.current
     val vm: CategoryViewModel = viewModel()
+    val userVm: UserViewModel = viewModel()
+    val medicineVm: MedicineViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val categories by vm.categories.collectAsState()
     val isLoading by vm.loading.collectAsState()
+    val adminUser by userVm.user.collectAsState()
+    val isLoggedOut by userVm.isLoggedOut.collectAsState()
+    val medicines by medicineVm.medicines.collectAsState()
+    val notificationVm: NotificationViewModel = viewModel()
+    val unreadCount by notificationVm.unreadCount.collectAsState()
 
-    LaunchedEffect(Unit) { vm.loadCategories() }
+    LaunchedEffect(Unit) {
+        vm.loadCategories()
+        userVm.loadCurrentUser()
+        medicineVm.loadMedicines()
+        notificationVm.loadNotifications(ADMIN_NOTIFICATION_BUCKET)
+    }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -94,9 +116,33 @@ fun AdminCategoryManagementBody() {
         }
     }
 
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut) {
+            val intent = Intent(context, SignInActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
+        }
+    }
+
     AdminCategoryManagementScreen(
         categories = categories,
+        medicines = medicines,
         isLoading = isLoading,
+        adminName = adminUser?.fullName ?: "Admin",
+        adminEmail = adminUser?.email ?: "",
+        adminPhotoUrl = adminUser?.profileImageUrl ?: "",
+        unreadNotificationCount = unreadCount,
+        onNotificationsClick = {
+            val i = Intent(context, NotificationCenterActivity::class.java)
+            i.putExtra("recipientId", ADMIN_NOTIFICATION_BUCKET)
+            context.startActivity(i)
+        },
+        onNavigateDashboard = { context.startActivity(Intent(context, AdminDashboardActivity::class.java)) },
+        onNavigateMedicines = { context.startActivity(Intent(context, AdminMedicineManagement::class.java)) },
+        onNavigatePrescriptions = { context.startActivity(Intent(context, AdminPrescriptionManagement::class.java)) },
+        onNavigateOrders = { context.startActivity(Intent(context, AdminOrderManagement::class.java)) },
+        onNavigateProfile = { context.startActivity(Intent(context, AdminProfileActivity::class.java)) },
+        onLogout = { userVm.logOut() },
         onToggleStatus = { id, status -> vm.toggleStatus(id, status) },
         onDelete = { id -> vm.deleteCategory(id) {} },
         onEdit = { category ->
@@ -105,10 +151,8 @@ fun AdminCategoryManagementBody() {
                 putExtra("name", category.name)
                 putExtra("description", category.description)
                 putExtra("icon", category.icon)
-                putExtra("type", category.type)
                 putExtra("isActive", category.isActive)
                 putExtra("slug", category.slug)
-                putExtra("medicineCount", category.medicineCount)
             }
             context.startActivity(intent)
         },
@@ -119,26 +163,54 @@ fun AdminCategoryManagementBody() {
 @Composable
 fun AdminCategoryManagementScreen(
     categories: List<CategoryModel> = emptyList(),
+    medicines: List<MedicineModel> = emptyList(),
     isLoading: Boolean = false,
+    adminName: String = "Admin",
+    adminEmail: String = "",
+    adminPhotoUrl: String = "",
+    unreadNotificationCount: Int = 0,
+    onNotificationsClick: () -> Unit = {},
     onToggleStatus: (String, Boolean) -> Unit = { _, _ -> },
     onDelete: (String) -> Unit = {},
     onEdit: (CategoryModel) -> Unit = {},
-    onAddClick: () -> Unit = {}
+    onAddClick: () -> Unit = {},
+    onNavigateDashboard: () -> Unit = {},
+    onNavigateMedicines: () -> Unit = {},
+    onNavigatePrescriptions: () -> Unit = {},
+    onNavigateOrders: () -> Unit = {},
+    onNavigateProfile: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("All Categories") }
-
-    val filters = listOf("All Categories", "Prescription", "OTC", "Supplement")
 
     val filtered = categories.filter { category ->
-        val matchesSearch = category.name.contains(searchQuery, ignoreCase = true)
-        val matchesFilter = selectedFilter == "All Categories" || category.type == selectedFilter
-        matchesSearch && matchesFilter
+        category.name.contains(searchQuery, ignoreCase = true)
     }
 
     val totalActive = categories.count { it.isActive }
-    val totalMedicines = categories.sumOf { it.medicineCount }
+    val totalMedicines = medicines.size
 
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            AdminSideDrawer(
+                adminName = adminName,
+                adminEmail = adminEmail,
+                adminPhotoUrl = adminPhotoUrl,
+                activeItem = "Categories",
+                onClose = { scope.launch { drawerState.close() } },
+                onNavigateDashboard = { scope.launch { drawerState.close() }; onNavigateDashboard() },
+                onNavigateMedicines = { scope.launch { drawerState.close() }; onNavigateMedicines() },
+                onNavigateCategories = { scope.launch { drawerState.close() } },
+                onNavigatePrescriptions = { scope.launch { drawerState.close() }; onNavigatePrescriptions() },
+                onNavigateOrders = { scope.launch { drawerState.close() }; onNavigateOrders() },
+                onLogout = { scope.launch { drawerState.close() }; onLogout() }
+            )
+        }
+    ) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
@@ -165,20 +237,34 @@ fun AdminCategoryManagementScreen(
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { scope.launch { drawerState.open() } }
+                )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(text = "Medicine Categories", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C), modifier = Modifier.weight(1f))
                 Box {
-                    Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
-                    Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp).clickable { onNotificationsClick() }
+                    )
+                    if (unreadNotificationCount > 0) {
+                        Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Box(
-                    modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                }
+                AvatarCircle(
+                    photoUrl = adminPhotoUrl,
+                    fallbackText = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
+                    size = 36.dp,
+                    modifier = Modifier.clickable { onNavigateProfile() }
+                )
             }
 
             LazyColumn(
@@ -198,26 +284,6 @@ fun AdminCategoryManagementScreen(
                         AdminStatCard(label = "Active Types", value = "$totalActive", valueColor = Color(0xFF0051D5))
                         AdminStatCard(label = "Total SKUs", value = "$totalMedicines", valueColor = MaterialTheme.colorScheme.onSurface)
                     }
-                }
-
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0051D5))
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = "Sync Status", fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f))
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(text = "Cloud Ready", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            }
-                            Text(text = "Last update: 2 mins ago", fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f))
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 item {
@@ -247,22 +313,6 @@ fun AdminCategoryManagementScreen(
                         color = Color(0xFF006B2C),
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        filters.forEach { filter ->
-                            FilterChip(
-                                label = filter,
-                                isSelected = selectedFilter == filter,
-                                onClick = { selectedFilter = filter }
-                            )
-                        }
-                    }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
@@ -292,6 +342,7 @@ fun AdminCategoryManagementScreen(
                 items(filtered) { category ->
                     CategoryListItem(
                         category = category,
+                        medicineCount = medicines.count { it.category == category.name },
                         onToggle = { onToggleStatus(category.categoryId, it) },
                         onEdit = { onEdit(category) },
                         onDelete = { onDelete(category.categoryId) }
@@ -302,6 +353,7 @@ fun AdminCategoryManagementScreen(
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
+    }
     }
 }
 
@@ -321,28 +373,9 @@ fun AdminStatCard(label: String, value: String, valueColor: Color) {
 }
 
 @Composable
-fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .background(
-                color = if (isSelected) Color(0xFF00501F) else MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(50.dp)
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
 fun CategoryListItem(
     category: CategoryModel,
+    medicineCount: Int = 0,
     onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit = {},
     onDelete: () -> Unit
@@ -368,17 +401,7 @@ fun CategoryListItem(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = category.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(4.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(text = category.type, fontSize = 10.sp, color = Color(0xFF0051D5), fontWeight = FontWeight.SemiBold)
-                        }
-                    }
+                    Text(text = category.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = category.slug, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -390,7 +413,7 @@ fun CategoryListItem(
                                 .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(50.dp))
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Text(text = "${category.medicineCount} medicines", fontSize = 11.sp, color = Color(0xFF006B2C), fontWeight = FontWeight.Medium)
+                            Text(text = "$medicineCount medicines", fontSize = 11.sp, color = Color(0xFF006B2C), fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -427,9 +450,9 @@ fun CategoryListItem(
 @Composable
 fun AdminCategoryManagementPreview() {
     val sampleCategories = listOf(
-        CategoryModel("1", "Antibiotics", "/slug/antibiotics", "For bacterial infections", "💊", "OTC", true, 142),
-        CategoryModel("2", "Vitamins", "/slug/vitamins", "Dietary supplements", "🌿", "OTC", true, 58),
-        CategoryModel("3", "Pain Relief", "/slug/pain-relief", "Analgesics", "🩹", "Prescription", false, 34)
+        CategoryModel("1", "Antibiotics", "/slug/antibiotics", "For bacterial infections", "💊", true),
+        CategoryModel("2", "Vitamins", "/slug/vitamins", "Dietary supplements", "🌿", true),
+        CategoryModel("3", "Pain Relief", "/slug/pain-relief", "Analgesics", "🩹", false)
     )
     AdminCategoryManagementScreen(categories = sampleCategories)
 }

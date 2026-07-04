@@ -13,31 +13,40 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +59,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.PrescriptionModel
 import com.example.pharmax.ui.theme.PharmaXTheme
+import com.example.pharmax.viewmodel.ADMIN_NOTIFICATION_BUCKET
+import com.example.pharmax.viewmodel.NotificationViewModel
 import com.example.pharmax.viewmodel.PrescriptionViewModel
+import com.example.pharmax.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,31 +74,64 @@ class AdminPrescriptionManagement : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PharmaXTheme {
-                AdminPrescriptionManagementBody(onBack = { finish() })
+                AdminPrescriptionManagementBody()
             }
         }
     }
 }
 
 @Composable
-fun AdminPrescriptionManagementBody(onBack: () -> Unit = {}) {
+fun AdminPrescriptionManagementBody() {
     val context = LocalContext.current
     val vm: PrescriptionViewModel = viewModel()
+    val userVm: UserViewModel = viewModel()
+    val notificationVm: NotificationViewModel = viewModel()
 
     val prescriptions by vm.prescriptions.collectAsState()
     val isLoading by vm.loading.collectAsState()
+    val adminUser by userVm.user.collectAsState()
+    val isLoggedOut by userVm.isLoggedOut.collectAsState()
+    val unreadCount by notificationVm.unreadCount.collectAsState()
 
-    LaunchedEffect(Unit) { vm.loadAllPrescriptions() }
+    LaunchedEffect(Unit) {
+        vm.loadAllPrescriptions()
+        userVm.loadCurrentUser()
+        notificationVm.loadNotifications(ADMIN_NOTIFICATION_BUCKET)
+    }
+
+    LaunchedEffect(isLoggedOut) {
+        if (isLoggedOut) {
+            val intent = Intent(context, SignInActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
+        }
+    }
 
     AdminPrescriptionManagementScreen(
         prescriptions = prescriptions,
         isLoading = isLoading,
-        onBack = onBack,
+        adminName = adminUser?.fullName ?: "Admin",
+        adminEmail = adminUser?.email ?: "",
+        adminPhotoUrl = adminUser?.profileImageUrl ?: "",
+        unreadNotificationCount = unreadCount,
+        onNotificationsClick = {
+            val i = Intent(context, NotificationCenterActivity::class.java)
+            i.putExtra("recipientId", ADMIN_NOTIFICATION_BUCKET)
+            context.startActivity(i)
+        },
+        onNavigateDashboard = { context.startActivity(Intent(context, AdminDashboardActivity::class.java)) },
+        onNavigateMedicines = { context.startActivity(Intent(context, AdminMedicineManagement::class.java)) },
+        onNavigateCategories = { context.startActivity(Intent(context, AdminCategoryManagement::class.java)) },
+        onNavigateProfile = { context.startActivity(Intent(context, AdminProfileActivity::class.java)) },
+        onNavigateOrders = { context.startActivity(Intent(context, AdminOrderManagement::class.java)) },
+        onLogout = { userVm.logOut() },
         onPrescriptionClick = { prescription ->
             val intent = Intent(context, AdminPrescriptionDetailActivity::class.java)
             intent.putExtra("prescriptionId", prescription.prescriptionId)
+            intent.putExtra("userId", prescription.userId)
             intent.putExtra("userName", prescription.userName)
             intent.putExtra("userPhone", prescription.userPhone)
+            intent.putExtra("name", prescription.name)
             intent.putExtra("medicineName", prescription.medicineName)
             intent.putExtra("imageUrl", prescription.imageUrl)
             intent.putExtra("notes", prescription.notes)
@@ -101,14 +147,45 @@ fun AdminPrescriptionManagementBody(onBack: () -> Unit = {}) {
 fun AdminPrescriptionManagementScreen(
     prescriptions: List<PrescriptionModel> = emptyList(),
     isLoading: Boolean = false,
-    onBack: () -> Unit = {},
+    adminName: String = "Admin",
+    adminEmail: String = "",
+    adminPhotoUrl: String = "",
+    unreadNotificationCount: Int = 0,
+    onNotificationsClick: () -> Unit = {},
+    onNavigateDashboard: () -> Unit = {},
+    onNavigateMedicines: () -> Unit = {},
+    onNavigateCategories: () -> Unit = {},
+    onNavigateProfile: () -> Unit = {},
+    onNavigateOrders: () -> Unit = {},
+    onLogout: () -> Unit = {},
     onPrescriptionClick: (PrescriptionModel) -> Unit = {}
 ) {
     var selectedFilter by remember { mutableStateOf("All") }
     val filters = listOf("All", "Pending", "Approved", "Rejected")
     val filtered = if (selectedFilter == "All") prescriptions else prescriptions.filter { it.status == selectedFilter }
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            AdminSideDrawer(
+                adminName = adminName,
+                adminEmail = adminEmail,
+                adminPhotoUrl = adminPhotoUrl,
+                activeItem = "Prescriptions",
+                onClose = { scope.launch { drawerState.close() } },
+                onNavigateDashboard = { scope.launch { drawerState.close() }; onNavigateDashboard() },
+                onNavigateMedicines = { scope.launch { drawerState.close() }; onNavigateMedicines() },
+                onNavigateCategories = { scope.launch { drawerState.close() }; onNavigateCategories() },
+                onNavigatePrescriptions = { scope.launch { drawerState.close() } },
+                onNavigateOrders = { scope.launch { drawerState.close() }; onNavigateOrders() },
+                onLogout = { scope.launch { drawerState.close() }; onLogout() }
+            )
+        }
+    ) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars)) {
 
         // ── Top bar ───────────────────────────────────────────────────────
         Row(
@@ -116,13 +193,31 @@ fun AdminPrescriptionManagementScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color(0xFF006B2C),
-                modifier = Modifier.size(24.dp).clickable { onBack() }
+                imageVector = Icons.Default.Menu,
+                contentDescription = "Menu",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp).clickable { scope.launch { drawerState.open() } }
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = "Prescriptions", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
+            Text(text = "Prescriptions", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C), modifier = Modifier.weight(1f))
+            Box {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp).clickable { onNotificationsClick() }
+                )
+                if (unreadNotificationCount > 0) {
+                    Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            AvatarCircle(
+                photoUrl = adminPhotoUrl,
+                fallbackText = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
+                size = 36.dp,
+                modifier = Modifier.clickable { onNavigateProfile() }
+            )
         }
 
         // ── Filter chips ─────────────────────────────────────────────────
@@ -176,6 +271,7 @@ fun AdminPrescriptionManagementScreen(
             }
         }
     }
+    }
 }
 
 @Composable
@@ -216,7 +312,7 @@ private fun AdminPrescriptionCard(prescription: PrescriptionModel, onClick: () -
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = prescription.userName.ifBlank { "Unknown User" }, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Text(
-                    text = prescription.medicineName.ifBlank { "General Prescription" },
+                    text = prescription.name.ifBlank { prescription.medicineName.ifBlank { "General Prescription" } },
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

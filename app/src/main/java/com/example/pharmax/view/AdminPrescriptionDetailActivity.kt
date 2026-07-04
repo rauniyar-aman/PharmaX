@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -64,8 +67,10 @@ class AdminPrescriptionDetailActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val prescriptionId = intent.getStringExtra("prescriptionId") ?: ""
+        val userId = intent.getStringExtra("userId") ?: ""
         val userName = intent.getStringExtra("userName") ?: ""
         val userPhone = intent.getStringExtra("userPhone") ?: ""
+        val name = intent.getStringExtra("name") ?: ""
         val medicineName = intent.getStringExtra("medicineName") ?: ""
         val imageUrl = intent.getStringExtra("imageUrl") ?: ""
         val notes = intent.getStringExtra("notes") ?: ""
@@ -77,8 +82,10 @@ class AdminPrescriptionDetailActivity : ComponentActivity() {
             PharmaXTheme {
                 AdminPrescriptionDetailBody(
                     prescriptionId = prescriptionId,
+                    userId = userId,
                     userName = userName,
                     userPhone = userPhone,
+                    name = name,
                     medicineName = medicineName,
                     imageUrl = imageUrl,
                     notes = notes,
@@ -95,8 +102,10 @@ class AdminPrescriptionDetailActivity : ComponentActivity() {
 @Composable
 fun AdminPrescriptionDetailBody(
     prescriptionId: String,
+    userId: String,
     userName: String,
     userPhone: String,
+    name: String,
     medicineName: String,
     imageUrl: String,
     notes: String,
@@ -121,6 +130,7 @@ fun AdminPrescriptionDetailBody(
     AdminPrescriptionDetailScreen(
         userName = userName,
         userPhone = userPhone,
+        name = name,
         medicineName = medicineName,
         imageUrl = imageUrl,
         notes = notes,
@@ -128,8 +138,8 @@ fun AdminPrescriptionDetailBody(
         adminComment = initialComment,
         uploadedAt = uploadedAt,
         isLoading = isLoading,
-        onApprove = { comment -> vm.updateStatus(prescriptionId, "Approved", comment) { onBack() } },
-        onReject = { comment -> vm.updateStatus(prescriptionId, "Rejected", comment) { onBack() } },
+        onApprove = { comment -> vm.updateStatus(prescriptionId, "Approved", comment, userId, medicineName) { onBack() } },
+        onReject = { comment -> vm.updateStatus(prescriptionId, "Rejected", comment, userId, medicineName) { onBack() } },
         onBack = onBack
     )
 }
@@ -138,6 +148,7 @@ fun AdminPrescriptionDetailBody(
 fun AdminPrescriptionDetailScreen(
     userName: String = "",
     userPhone: String = "",
+    name: String = "",
     medicineName: String = "",
     imageUrl: String = "",
     notes: String = "",
@@ -164,7 +175,7 @@ fun AdminPrescriptionDetailScreen(
         else -> Color(0xFFFFF3E0)
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars)) {
 
         // ── Top bar ───────────────────────────────────────────────────────
         Row(
@@ -199,6 +210,8 @@ fun AdminPrescriptionDetailScreen(
                     DetailRowItem(label = "Patient Name", value = userName.ifBlank { "—" })
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 8.dp))
                     DetailRowItem(label = "Phone", value = userPhone.ifBlank { "—" })
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 8.dp))
+                    DetailRowItem(label = "Prescription Name", value = name.ifBlank { "—" })
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 8.dp))
                     DetailRowItem(label = "Medicine", value = medicineName.ifBlank { "General Prescription" })
                     if (dateText.isNotBlank()) {

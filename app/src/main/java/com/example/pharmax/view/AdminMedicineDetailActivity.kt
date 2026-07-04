@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,17 +33,26 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import android.content.Intent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.ui.theme.PharmaXTheme
+import com.example.pharmax.viewmodel.ADMIN_NOTIFICATION_BUCKET
+import com.example.pharmax.viewmodel.NotificationViewModel
+import com.example.pharmax.viewmodel.UserViewModel
 
 class AdminMedicineDetailActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,7 +66,7 @@ class AdminMedicineDetailActivity : ComponentActivity() {
             category = intent.getStringExtra("category") ?: "",
             description = intent.getStringExtra("description") ?: "",
             price = intent.getDoubleExtra("price", 0.0),
-            stock = intent.getIntExtra("stock", 0),
+            quantity = intent.getIntExtra("quantity", 0),
             dosage = intent.getStringExtra("dosage") ?: "",
             requiresPrescription = intent.getBooleanExtra("requiresPrescription", false),
             type = intent.getStringExtra("type") ?: "OTC",
@@ -72,19 +84,22 @@ class AdminMedicineDetailActivity : ComponentActivity() {
 
 @Composable
 fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack: () -> Unit = {}) {
-    val isLowStock = medicine.stock in 1..10
-    val isOutOfStock = medicine.stock == 0
-    val stockColor = if (isLowStock || isOutOfStock) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
-    val stockLabel = when {
-        isOutOfStock -> "Out of Stock"
-        isLowStock -> "Low Stock"
-        else -> "In Stock"
+    val context = LocalContext.current
+    val userVm: UserViewModel = viewModel()
+    val notificationVm: NotificationViewModel = viewModel()
+    val adminUser by userVm.user.collectAsState()
+    val unreadCount by notificationVm.unreadCount.collectAsState()
+
+    LaunchedEffect(Unit) {
+        userVm.loadCurrentUser()
+        notificationVm.loadNotifications(ADMIN_NOTIFICATION_BUCKET)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
 
         // ── Top bar ───────────────────────────────────────────────────────
@@ -110,16 +125,26 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
-                Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp).clickable {
+                        val i = Intent(context, NotificationCenterActivity::class.java)
+                        i.putExtra("recipientId", ADMIN_NOTIFICATION_BUCKET)
+                        context.startActivity(i)
+                    }
+                )
+                if (unreadCount > 0) {
+                    Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Box(
-                modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
+            AvatarCircle(
+                photoUrl = adminUser?.profileImageUrl ?: "",
+                fallbackText = adminUser?.fullName?.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
+                size = 36.dp
+            )
         }
 
         Column(
@@ -194,13 +219,8 @@ fun AdminMedicineDetailScreen(medicine: MedicineModel = MedicineModel(), onBack:
                         }
                         Box(modifier = Modifier.width(1.dp).height(40.dp).background(MaterialTheme.colorScheme.outlineVariant))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Stock", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(text = "${medicine.stock}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = stockColor)
-                        }
-                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(MaterialTheme.colorScheme.outlineVariant))
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Status", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(text = stockLabel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = stockColor)
+                            Text(text = "Quantity", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(text = "${medicine.quantity}", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
@@ -290,7 +310,7 @@ fun AdminMedicineDetailPreview() {
             category = "Pain Relief",
             description = "A common painkiller used to treat aches and pain.",
             price = 120.0,
-            stock = 42,
+            quantity = 42,
             dosage = "500mg",
             requiresPrescription = false,
             type = "OTC",

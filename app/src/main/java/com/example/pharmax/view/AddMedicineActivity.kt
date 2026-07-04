@@ -15,12 +15,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +32,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,11 +39,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -65,11 +68,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import android.content.Intent
 import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.ui.theme.PharmaXTheme
+import com.example.pharmax.viewmodel.ADMIN_NOTIFICATION_BUCKET
 import com.example.pharmax.viewmodel.CategoryViewModel
 import com.example.pharmax.viewmodel.ImageViewModel
 import com.example.pharmax.viewmodel.MedicineViewModel
+import com.example.pharmax.viewmodel.NotificationViewModel
+import com.example.pharmax.viewmodel.UserViewModel
 
 class AddMedicineActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,7 +91,7 @@ class AddMedicineActivity : ComponentActivity() {
                 category = intent.getStringExtra("category") ?: "",
                 description = intent.getStringExtra("description") ?: "",
                 price = intent.getDoubleExtra("price", 0.0),
-                stock = intent.getIntExtra("stock", 0),
+                quantity = intent.getIntExtra("quantity", 0),
                 dosage = intent.getStringExtra("dosage") ?: "",
                 requiresPrescription = intent.getBooleanExtra("requiresPrescription", false),
                 type = intent.getStringExtra("type") ?: "OTC",
@@ -108,15 +115,23 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
     val vm: MedicineViewModel = viewModel()
     val categoryVm: CategoryViewModel = viewModel()
     val imageVm: ImageViewModel = viewModel()
+    val userVm: UserViewModel = viewModel()
+    val notificationVm: NotificationViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val isLoading by vm.loading.collectAsState()
     val categories by categoryVm.categories.collectAsState()
     val isUploading by imageVm.isUploading.collectAsState()
     val imageMessage by imageVm.message.collectAsState()
+    val adminUser by userVm.user.collectAsState()
+    val unreadCount by notificationVm.unreadCount.collectAsState()
     var imageUrl by remember { mutableStateOf(editMedicine?.imageUrl ?: "") }
 
-    LaunchedEffect(Unit) { categoryVm.loadCategories() }
+    LaunchedEffect(Unit) {
+        categoryVm.loadCategories()
+        userVm.loadCurrentUser()
+        notificationVm.loadNotifications(ADMIN_NOTIFICATION_BUCKET)
+    }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -144,6 +159,14 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
         isUploadingImage = isUploading,
         imageUrl = imageUrl,
         categoryNames = categories.filter { it.isActive }.map { it.name },
+        adminName = adminUser?.fullName ?: "Admin",
+        adminPhotoUrl = adminUser?.profileImageUrl ?: "",
+        unreadNotificationCount = unreadCount,
+        onNotificationsClick = {
+            val i = Intent(context, NotificationCenterActivity::class.java)
+            i.putExtra("recipientId", ADMIN_NOTIFICATION_BUCKET)
+            context.startActivity(i)
+        },
         onPickImage = { imageLauncher.launch("image/*") },
         onSave = { model ->
             val finalModel = model.copy(imageUrl = imageUrl)
@@ -158,6 +181,7 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
 }
 
 // Pure UI — safe to preview
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMedicineScreen(
     editMedicine: MedicineModel? = null,
@@ -165,6 +189,10 @@ fun AddMedicineScreen(
     isUploadingImage: Boolean = false,
     imageUrl: String = "",
     categoryNames: List<String> = listOf("Pain Relief", "Antibiotics", "Vitamins", "Supplements", "Skincare", "Diabetes"),
+    adminName: String = "Admin",
+    adminPhotoUrl: String = "",
+    unreadNotificationCount: Int = 0,
+    onNotificationsClick: () -> Unit = {},
     onPickImage: () -> Unit = {},
     onSave: (MedicineModel) -> Unit = {},
     onCancel: () -> Unit = {}
@@ -177,9 +205,8 @@ fun AddMedicineScreen(
     var category by remember { mutableStateOf(editMedicine?.category ?: "") }
     var description by remember { mutableStateOf(editMedicine?.description ?: "") }
     var price by remember { mutableStateOf(if (editMedicine != null && editMedicine.price > 0) editMedicine.price.toString() else "") }
-    var stock by remember { mutableStateOf(if (editMedicine != null) editMedicine.stock.toString() else "") }
+    var quantity by remember { mutableStateOf(if (editMedicine != null) editMedicine.quantity.toString() else "") }
     var dosage by remember { mutableStateOf(editMedicine?.dosage ?: "") }
-    var requiresPrescription by remember { mutableStateOf(editMedicine?.requiresPrescription ?: false) }
     var medicineType by remember { mutableStateOf(editMedicine?.type ?: "OTC") }
     var howToUse by remember { mutableStateOf(editMedicine?.howToUse ?: "") }
     var ingredientInput by remember { mutableStateOf("") }
@@ -190,6 +217,7 @@ fun AddMedicineScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
 
         // ── Top bar ───────────────────────────────────────────────────────
@@ -215,16 +243,22 @@ fun AddMedicineScreen(
                 modifier = Modifier.weight(1f)
             )
             Box {
-                Icon(imageVector = Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
-                Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp).clickable { onNotificationsClick() }
+                )
+                if (unreadNotificationCount > 0) {
+                    Box(modifier = Modifier.size(8.dp).background(Color.Red, CircleShape).align(Alignment.TopEnd))
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Box(
-                modifier = Modifier.size(36.dp).background(Color(0xFF006B2C), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "A", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
+            AvatarCircle(
+                photoUrl = adminPhotoUrl,
+                fallbackText = adminName.firstOrNull()?.uppercaseChar()?.toString() ?: "A",
+                size = 36.dp
+            )
         }
 
         Column(
@@ -297,19 +331,18 @@ fun AddMedicineScreen(
 
             // ── Category dropdown ─────────────────────────────────────────
             FormLabel(text = "Category")
-            Box {
+            ExposedDropdownMenuBox(
+                expanded = categoryExpanded,
+                onExpandedChange = { categoryExpanded = it }
+            ) {
                 OutlinedTextField(
                     value = category,
                     onValueChange = {},
                     readOnly = true,
-                    modifier = Modifier.fillMaxWidth().clickable { categoryExpanded = true },
+                    modifier = Modifier.fillMaxWidth().menuAnchor(),
                     placeholder = { Text("Select Category") },
                     trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            modifier = Modifier.clickable { categoryExpanded = true }
-                        )
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(50.dp),
@@ -340,7 +373,7 @@ fun AddMedicineScreen(
                 colors = medicineFieldColors()
             )
 
-            // ── Price + Stock ─────────────────────────────────────────────
+            // ── Price + Quantity ────────────────────────────────────────────
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
                     FormLabel(text = "Price (NPR)*")
@@ -356,10 +389,10 @@ fun AddMedicineScreen(
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    FormLabel(text = "Stock Qty*")
+                    FormLabel(text = "Quantity*")
                     OutlinedTextField(
-                        value = stock,
-                        onValueChange = { stock = it },
+                        value = quantity,
+                        onValueChange = { quantity = it },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("0") },
                         singleLine = true,
@@ -381,25 +414,6 @@ fun AddMedicineScreen(
                 shape = RoundedCornerShape(50.dp),
                 colors = medicineFieldColors()
             )
-
-            // ── Requires Prescription toggle ──────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Requires Prescription", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-                    Text(text = "Rx-only medicines require doctor approval", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(
-                    checked = requiresPrescription,
-                    onCheckedChange = { requiresPrescription = it },
-                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFF0051D5))
-                )
-            }
 
             // ── Medicine Type: Rx / OTC ───────────────────────────────────
             FormLabel(text = "Medicine Type")
@@ -532,9 +546,9 @@ fun AddMedicineScreen(
                             category = category,
                             description = description,
                             price = price.toDoubleOrNull() ?: 0.0,
-                            stock = stock.toIntOrNull() ?: 0,
+                            quantity = quantity.toIntOrNull() ?: 0,
                             dosage = dosage,
-                            requiresPrescription = requiresPrescription,
+                            requiresPrescription = medicineType == "Rx",
                             type = medicineType,
                             ingredients = ingredients.toList(),
                             howToUse = howToUse

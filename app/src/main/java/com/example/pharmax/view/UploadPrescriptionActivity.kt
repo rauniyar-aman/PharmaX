@@ -1,5 +1,6 @@
 package com.example.pharmax.view
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -15,12 +16,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -67,12 +71,41 @@ class UploadPrescriptionActivity : ComponentActivity() {
         enableEdgeToEdge()
         val medicineId = intent.getStringExtra("medicineId") ?: ""
         val medicineName = intent.getStringExtra("medicineName") ?: ""
+        val prescriptionId = intent.getStringExtra("prescriptionId") ?: ""
+        val existingName = intent.getStringExtra("existingName") ?: ""
+        val existingImageUrl = intent.getStringExtra("existingImageUrl") ?: ""
+        val existingNotes = intent.getStringExtra("existingNotes") ?: ""
         setContent {
             PharmaXTheme {
                 UploadPrescriptionBody(
                     medicineId = medicineId,
                     medicineName = medicineName,
-                    onBack = { finish() }
+                    prescriptionId = prescriptionId,
+                    initialName = existingName,
+                    initialImageUrl = existingImageUrl,
+                    initialNotes = existingNotes,
+                    onBack = { finish() },
+                    onCreated = { saved ->
+                        val i = Intent(this, UserPrescriptionDetailActivity::class.java)
+                        i.putExtra("prescriptionId", saved.prescriptionId)
+                        i.putExtra("name", saved.name)
+                        i.putExtra("medicineName", saved.medicineName)
+                        i.putExtra("imageUrl", saved.imageUrl)
+                        i.putExtra("notes", saved.notes)
+                        i.putExtra("status", saved.status)
+                        i.putExtra("adminComment", saved.adminComment)
+                        i.putExtra("uploadedAt", saved.uploadedAt)
+                        startActivity(i)
+                        finish()
+                    },
+                    onUpdated = { updatedName, updatedImageUrl, updatedNotes ->
+                        val result = Intent()
+                        result.putExtra("name", updatedName)
+                        result.putExtra("imageUrl", updatedImageUrl)
+                        result.putExtra("notes", updatedNotes)
+                        setResult(RESULT_OK, result)
+                        finish()
+                    }
                 )
             }
         }
@@ -83,7 +116,13 @@ class UploadPrescriptionActivity : ComponentActivity() {
 fun UploadPrescriptionBody(
     medicineId: String = "",
     medicineName: String = "",
-    onBack: () -> Unit = {}
+    prescriptionId: String = "",
+    initialName: String = "",
+    initialImageUrl: String = "",
+    initialNotes: String = "",
+    onBack: () -> Unit = {},
+    onCreated: (PrescriptionModel) -> Unit = {},
+    onUpdated: (String, String, String) -> Unit = { _, _, _ -> }
 ) {
     val context = LocalContext.current
     val userVm: UserViewModel = viewModel()
@@ -96,7 +135,8 @@ fun UploadPrescriptionBody(
     val isSaving by prescriptionVm.loading.collectAsState()
     val message by prescriptionVm.message.collectAsState()
 
-    var imageUrl by remember { mutableStateOf("") }
+    var imageUrl by remember { mutableStateOf(initialImageUrl) }
+    val isEditMode = prescriptionId.isNotBlank()
 
     LaunchedEffect(Unit) { userVm.loadCurrentUser() }
 
@@ -121,20 +161,28 @@ fun UploadPrescriptionBody(
     UploadPrescriptionScreen(
         medicineName = medicineName,
         imageUrl = imageUrl,
+        initialName = initialName.ifBlank { medicineName },
+        initialNotes = initialNotes,
+        isEditMode = isEditMode,
         isUploadingImage = isUploading,
         isSaving = isSaving,
         onPickImage = { imageLauncher.launch("image/*") },
-        onSubmit = { notes ->
-            val model = PrescriptionModel(
-                userId = user?.uid ?: "",
-                userName = user?.fullName ?: "",
-                userPhone = user?.phone ?: "",
-                medicineId = medicineId,
-                medicineName = medicineName,
-                imageUrl = imageUrl,
-                notes = notes
-            )
-            prescriptionVm.addPrescription(model) { onBack() }
+        onSubmit = { name, notes ->
+            if (isEditMode) {
+                prescriptionVm.updatePrescription(prescriptionId, name, imageUrl, notes) { onUpdated(name, imageUrl, notes) }
+            } else {
+                val model = PrescriptionModel(
+                    userId = user?.uid ?: "",
+                    userName = user?.fullName ?: "",
+                    userPhone = user?.phone ?: "",
+                    medicineId = medicineId,
+                    medicineName = medicineName,
+                    name = name,
+                    imageUrl = imageUrl,
+                    notes = notes
+                )
+                prescriptionVm.addPrescription(model) { saved -> onCreated(saved) }
+            }
         },
         onBack = onBack
     )
@@ -144,15 +192,19 @@ fun UploadPrescriptionBody(
 fun UploadPrescriptionScreen(
     medicineName: String = "",
     imageUrl: String = "",
+    initialName: String = "",
+    initialNotes: String = "",
+    isEditMode: Boolean = false,
     isUploadingImage: Boolean = false,
     isSaving: Boolean = false,
     onPickImage: () -> Unit = {},
-    onSubmit: (String) -> Unit = {},
+    onSubmit: (String, String) -> Unit = { _, _ -> },
     onBack: () -> Unit = {}
 ) {
-    var notes by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName) }
+    var notes by remember { mutableStateOf(initialNotes) }
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).windowInsetsPadding(WindowInsets.systemBars)) {
 
         // ── Top bar ───────────────────────────────────────────────────────
         Row(
@@ -166,7 +218,7 @@ fun UploadPrescriptionScreen(
                 modifier = Modifier.size(24.dp).clickable { onBack() }
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = "Upload Prescription", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
+            Text(text = if (isEditMode) "Edit Prescription" else "Upload Prescription", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
         }
 
         Column(
@@ -189,6 +241,27 @@ fun UploadPrescriptionScreen(
                     }
                 }
             }
+
+            Text(text = "Prescription Name*", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("e.g. Dr. Sharma's prescription") },
+                singleLine = true,
+                shape = RoundedCornerShape(50.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedIndicatorColor = Color(0xFF006B2C),
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+                )
+            )
+            Text(
+                text = "Give it a name you'll recognize later when picking a prescription for an order.",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Text(text = "PRESCRIPTION IMAGE", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp)
             Box(
@@ -243,15 +316,15 @@ fun UploadPrescriptionScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             ElevatedButton(
-                onClick = { onSubmit(notes) },
-                enabled = imageUrl.isNotBlank() && !isSaving && !isUploadingImage,
+                onClick = { onSubmit(name, notes) },
+                enabled = name.isNotBlank() && imageUrl.isNotBlank() && !isSaving && !isUploadingImage,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(50.dp),
                 colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF00501F), contentColor = Color.White),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 6.dp)
             ) {
                 if (isSaving) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
-                else Text(text = "Submit Prescription", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                else Text(text = if (isEditMode) "Save Changes" else "Submit Prescription", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -81,7 +81,19 @@ fun MyPrescriptionsBody() {
     MyPrescriptionsScreen(
         prescriptions = prescriptions,
         isLoading = isLoading,
-        onUploadNew = { context.startActivity(Intent(context, UploadPrescriptionActivity::class.java)) }
+        onUploadNew = { context.startActivity(Intent(context, UploadPrescriptionActivity::class.java)) },
+        onPrescriptionClick = { prescription ->
+            val i = Intent(context, UserPrescriptionDetailActivity::class.java)
+            i.putExtra("prescriptionId", prescription.prescriptionId)
+            i.putExtra("name", prescription.name)
+            i.putExtra("medicineName", prescription.medicineName)
+            i.putExtra("imageUrl", prescription.imageUrl)
+            i.putExtra("notes", prescription.notes)
+            i.putExtra("status", prescription.status)
+            i.putExtra("adminComment", prescription.adminComment)
+            i.putExtra("uploadedAt", prescription.uploadedAt)
+            context.startActivity(i)
+        }
     )
 }
 
@@ -89,7 +101,8 @@ fun MyPrescriptionsBody() {
 fun MyPrescriptionsScreen(
     prescriptions: List<PrescriptionModel> = emptyList(),
     isLoading: Boolean = false,
-    onUploadNew: () -> Unit = {}
+    onUploadNew: () -> Unit = {},
+    onPrescriptionClick: (PrescriptionModel) -> Unit = {}
 ) {
     Scaffold(
         bottomBar = { DashboardBottomNav(activeTab = "Prescriptions") }
@@ -138,7 +151,7 @@ fun MyPrescriptionsScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(prescriptions) { prescription ->
-                            MyPrescriptionCard(prescription)
+                            MyPrescriptionCard(prescription, onClick = { onPrescriptionClick(prescription) })
                         }
                         item { Spacer(modifier = Modifier.height(16.dp)) }
                     }
@@ -149,7 +162,7 @@ fun MyPrescriptionsScreen(
 }
 
 @Composable
-private fun MyPrescriptionCard(prescription: PrescriptionModel) {
+private fun MyPrescriptionCard(prescription: PrescriptionModel, onClick: () -> Unit = {}) {
     val statusColor = when (prescription.status) {
         "Approved" -> Color(0xFF006B2C)
         "Rejected" -> MaterialTheme.colorScheme.error
@@ -168,7 +181,7 @@ private fun MyPrescriptionCard(prescription: PrescriptionModel) {
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }
     ) {
         Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -180,11 +193,14 @@ private fun MyPrescriptionCard(prescription: PrescriptionModel) {
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = prescription.medicineName.ifBlank { "General Prescription" },
+                    text = prescription.name.ifBlank { prescription.medicineName.ifBlank { "General Prescription" } },
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                if (prescription.name.isNotBlank() && prescription.medicineName.isNotBlank()) {
+                    Text(text = prescription.medicineName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(text = dateText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (prescription.status == "Rejected" && prescription.adminComment.isNotBlank()) {
@@ -206,9 +222,9 @@ private fun MyPrescriptionCard(prescription: PrescriptionModel) {
 fun MyPrescriptionsPreview() {
     MyPrescriptionsScreen(
         prescriptions = listOf(
-            PrescriptionModel(medicineName = "Amoxicillin 500mg", status = "Pending"),
-            PrescriptionModel(medicineName = "Tramadol 50mg", status = "Approved"),
-            PrescriptionModel(medicineName = "Insulin", status = "Rejected", adminComment = "Image unclear, please re-upload")
+            PrescriptionModel(name = "Dr. Sharma's prescription", medicineName = "Amoxicillin 500mg", status = "Pending"),
+            PrescriptionModel(name = "Dental checkup Rx", medicineName = "Tramadol 50mg", status = "Approved"),
+            PrescriptionModel(name = "Diabetes refill", medicineName = "Insulin", status = "Rejected", adminComment = "Image unclear, please re-upload")
         )
     )
 }

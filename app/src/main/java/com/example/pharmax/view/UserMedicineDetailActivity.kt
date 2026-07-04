@@ -57,7 +57,7 @@ class UserMedicineDetailActivity : ComponentActivity() {
             category = intent.getStringExtra("category") ?: "",
             description = intent.getStringExtra("description") ?: "",
             price = intent.getDoubleExtra("price", 0.0),
-            stock = intent.getIntExtra("stock", 0),
+            quantity = intent.getIntExtra("quantity", 0),
             dosage = intent.getStringExtra("dosage") ?: "",
             requiresPrescription = intent.getBooleanExtra("requiresPrescription", false),
             type = intent.getStringExtra("type") ?: "OTC",
@@ -73,6 +73,15 @@ class UserMedicineDetailActivity : ComponentActivity() {
                         intent.putExtra("medicineId", medicine.medicineId)
                         intent.putExtra("medicineName", medicine.name)
                         startActivity(intent)
+                    },
+                    onBuyNow = {
+                        val intent = Intent(this, BuyMedicineActivity::class.java)
+                        intent.putExtra("medicineId", medicine.medicineId)
+                        intent.putExtra("medicineName", medicine.name)
+                        intent.putExtra("price", medicine.price)
+                        intent.putExtra("requiresPrescription", medicine.requiresPrescription)
+                        intent.putExtra("medicineType", medicine.type)
+                        startActivity(intent)
                     }
                 )
             }
@@ -84,26 +93,19 @@ class UserMedicineDetailActivity : ComponentActivity() {
 fun UserMedicineDetailBody(
     medicine: MedicineModel = MedicineModel(),
     onBack: () -> Unit = {},
-    onUploadPrescription: () -> Unit = {}
+    onUploadPrescription: () -> Unit = {},
+    onBuyNow: () -> Unit = {}
 ) {
-    UserMedicineDetailScreen(medicine = medicine, onBack = onBack, onUploadPrescription = onUploadPrescription)
+    UserMedicineDetailScreen(medicine = medicine, onBack = onBack, onUploadPrescription = onUploadPrescription, onBuyNow = onBuyNow)
 }
 
 @Composable
 fun UserMedicineDetailScreen(
     medicine: MedicineModel = MedicineModel(),
     onBack: () -> Unit = {},
-    onUploadPrescription: () -> Unit = {}
+    onUploadPrescription: () -> Unit = {},
+    onBuyNow: () -> Unit = {}
 ) {
-    val isOutOfStock = medicine.stock == 0
-    val isLowStock = medicine.stock in 1..10
-    val stockColor = if (isOutOfStock || isLowStock) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
-    val stockLabel = when {
-        isOutOfStock -> "Out of Stock"
-        isLowStock   -> "Low Stock"
-        else         -> "In Stock"
-    }
-
     Scaffold(
         bottomBar = { DashboardBottomNav(activeTab = "Medicines") }
     ) { innerPadding ->
@@ -215,8 +217,8 @@ fun UserMedicineDetailScreen(
                         }
                         Box(modifier = Modifier.width(1.dp).height(40.dp).background(MaterialTheme.colorScheme.outlineVariant))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "Availability", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(text = stockLabel, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = stockColor)
+                            Text(text = "Quantity", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(text = "${medicine.quantity}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006B2C))
                         }
                     }
                 }
@@ -278,6 +280,18 @@ fun UserMedicineDetailScreen(
                 ) {
                     Text(text = "Upload Prescription", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            ElevatedButton(
+                onClick = onBuyNow,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(50.dp),
+                colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF5C2D91), contentColor = Color.White),
+                elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 6.dp)
+            ) {
+                Text(text = "Buy Now", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -304,7 +318,7 @@ fun UserMedicineDetailPreview() {
             category = "Antibiotics",
             description = "Amoxicillin is an antibiotic used to treat a number of bacterial infections.",
             price = 180.0,
-            stock = 32,
+            quantity = 32,
             dosage = "500mg — 3 times daily",
             requiresPrescription = true,
             type = "Rx",

@@ -30,6 +30,13 @@ android {
 
         buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"${localProperties.getProperty("CLOUDINARY_CLOUD_NAME", "")}\"")
         buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", "\"${localProperties.getProperty("CLOUDINARY_UPLOAD_PRESET", "")}\"")
+        // Khalti requires a per-developer sandbox merchant account (sign up at
+        // https://test-admin.khalti.com/#/join/merchant) -- there is no shared public test key.
+        // Set KHALTI_SECRET_KEY / KHALTI_PUBLIC_KEY in local.properties with your own test (or live) keys.
+        // The fallback below is a placeholder and will be rejected by Khalti with a 401 until replaced.
+        buildConfigField("String", "KHALTI_SECRET_KEY", "\"${localProperties.getProperty("KHALTI_SECRET_KEY", "REPLACE_WITH_YOUR_KHALTI_TEST_SECRET_KEY")}\"")
+        buildConfigField("String", "KHALTI_PUBLIC_KEY", "\"${localProperties.getProperty("KHALTI_PUBLIC_KEY", "REPLACE_WITH_YOUR_KHALTI_TEST_PUBLIC_KEY")}\"")
+        buildConfigField("String", "KHALTI_BASE_URL", "\"${localProperties.getProperty("KHALTI_BASE_URL", "https://dev.khalti.com/api/v2/")}\"")
     }
 
     buildTypes {
@@ -67,6 +74,8 @@ dependencies {
     implementation("com.cloudinary:cloudinary-android:2.1.0")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.khalti:checkout-android:0.08.00")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

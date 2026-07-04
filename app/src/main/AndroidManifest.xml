@@ -33,103 +33,283 @@
         <activity
             android:name=".view.SignInActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Sign In"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.SignUpActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Sign Up"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.ForgotPasswordActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Forgot Password"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- Main App -->
         <activity
             android:name=".view.DashboardActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Dashboard"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- User Screens -->
         <activity
             android:name=".view.ProfileActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Profile"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.BrowseAllMedicinesActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Browse All Medicines"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.BrowseCategoriesActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Browse Categories"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.MedicineListActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Medicine List"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.UserMedicineDetailActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Medicine Detail"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.UploadPrescriptionActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Upload Prescription"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.MyPrescriptionsActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="My Prescriptions"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".view.UserPrescriptionDetailActivity"
+            android:exported="true"
+            android:label="Prescription Detail"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".view.BuyMedicineActivity"
+            android:exported="true"
+            android:label="Buy Medicine"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".view.MyOrdersActivity"
+            android:exported="true"
+            android:label="My Orders"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".view.NotificationCenterActivity"
+            android:exported="true"
+            android:label="Notifications"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- Admin Screens -->
         <activity
             android:name=".view.AdminCategoryManagement"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Admin Categories"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.AddCategoryActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Add Category"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- Admin Dashboard -->
         <activity
             android:name=".view.AdminDashboardActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Admin Dashboard"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- Admin Medicine Screens -->
         <activity
             android:name=".view.AdminMedicineManagement"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Admin Medicines"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.AddMedicineActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Add Medicine"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.AdminMedicineDetailActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Admin Medicine Detail"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- Admin Prescription Screens -->
         <activity
             android:name=".view.AdminPrescriptionManagement"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Admin Prescriptions"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".view.AdminPrescriptionDetailActivity"
             android:exported="true"
-            android:theme="@style/Theme.PharmaX" />
+            android:label="Admin Prescription Detail"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".view.AdminProfileActivity"
+            android:exported="true"
+            android:label="Admin Profile"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".view.AdminOrderManagement"
+            android:exported="true"
+            android:label="Admin Orders"
+            android:theme="@style/Theme.PharmaX">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
     </application>
 

@@ -45,5 +45,7 @@ interface UserRepo {
 
     fun updateProfileImage(uid: String, imageUrl: String, callback: (Boolean, String) -> Unit)
 
+    fun updateDarkMode(uid: String, isDark: Boolean, callback: (Boolean, String) -> Unit)
+
     fun changePassword(email: String, currentPassword: String, newPassword: String, callback: (Boolean, String) -> Unit)
 }

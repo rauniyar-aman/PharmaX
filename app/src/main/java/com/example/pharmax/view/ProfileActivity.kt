@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
@@ -32,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -98,9 +98,6 @@ fun ProfileBody() {
     val message by vm.message.collectAsState()
     val imageMessage by imageVm.message.collectAsState()
 
-    val prefs = context.getSharedPreferences("pharmax_prefs", android.content.Context.MODE_PRIVATE)
-    val initialDarkMode = AppThemeState.isDarkMode.value
-
     LaunchedEffect(Unit) { vm.loadCurrentUser() }
 
     LaunchedEffect(message) {
@@ -140,18 +137,12 @@ fun ProfileBody() {
         profileImageUrl = user?.profileImageUrl ?: "",
         isSaving = isSaving,
         isUploading = isUploading,
-        initialDarkMode = initialDarkMode,
         onPickImage = { imageLauncher.launch("image/*") },
         onRemoveImage = { vm.removeProfileImage() },
         onSaveProfile = { name, phone -> vm.updateProfile(name, phone) },
         onChangePassword = { current, new, confirm -> vm.changePassword(current, new, confirm) },
-        onDarkModeToggle = { isDark ->
-            prefs.edit().putBoolean("dark_mode", isDark).apply()
-            AppThemeState.isDarkMode.value = isDark
-            AppCompatDelegate.setDefaultNightMode(
-                if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
-            )
-        },
+        onDarkModeToggle = { isDark -> vm.updateDarkMode(isDark) },
+        onNavigateOrders = { context.startActivity(Intent(context, MyOrdersActivity::class.java)) },
         onLogout = { vm.logOut() }
     )
 }
@@ -164,18 +155,17 @@ fun ProfileScreen(
     profileImageUrl: String = "",
     isSaving: Boolean = false,
     isUploading: Boolean = false,
-    initialDarkMode: Boolean = false,
     onPickImage: () -> Unit = {},
     onRemoveImage: () -> Unit = {},
     onSaveProfile: (String, String) -> Unit = { _, _ -> },
     onChangePassword: (String, String, String) -> Unit = { _, _, _ -> },
     onDarkModeToggle: (Boolean) -> Unit = {},
+    onNavigateOrders: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showPhotoOptions by remember { mutableStateOf(false) }
-    var isDarkMode by remember { mutableStateOf(initialDarkMode) }
 
     if (showEditDialog) {
         EditProfileDialog(
@@ -324,6 +314,24 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ── Orders ────────────────────────────────────────────────────
+            ProfileSectionTitle("Orders")
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                ProfileActionRow(
+                    icon = Icons.Default.ShoppingCart,
+                    label = "My Orders",
+                    iconTint = Color(0xFF5C2D91),
+                    onClick = onNavigateOrders
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // ── Security ──────────────────────────────────────────────────
             ProfileSectionTitle("Security")
             Card(
@@ -356,8 +364,8 @@ fun ProfileScreen(
                 ) {
                     Text(text = "Dark Mode", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                     Switch(
-                        checked = isDarkMode,
-                        onCheckedChange = { isDarkMode = it; onDarkModeToggle(it) },
+                        checked = AppThemeState.isDarkMode.value,
+                        onCheckedChange = { onDarkModeToggle(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFF006B2C),

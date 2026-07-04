@@ -6,7 +6,8 @@ data class UserModel(
     val email: String = "",
     val phone: String = "",
     val role: String = "user",
-    val profileImageUrl: String = ""
+    val profileImageUrl: String = "",
+    val darkMode: Boolean = false
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -15,7 +16,8 @@ data class UserModel(
             "email" to email,
             "phone" to phone,
             "role" to role,
-            "profileImageUrl" to profileImageUrl
+            "profileImageUrl" to profileImageUrl,
+            "darkMode" to darkMode
         )
     }
 }

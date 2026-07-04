@@ -186,6 +186,12 @@ class UserRepoImpl : UserRepo {
             .addOnFailureListener { callback(false, it.message ?: "Failed to update profile picture") }
     }
 
+    override fun updateDarkMode(uid: String, isDark: Boolean, callback: (Boolean, String) -> Unit) {
+        ref.child(uid).child("darkMode").setValue(isDark)
+            .addOnSuccessListener { callback(true, "Preference updated") }
+            .addOnFailureListener { callback(false, it.message ?: "Failed to update preference") }
+    }
+
     override fun changePassword(email: String, currentPassword: String, newPassword: String, callback: (Boolean, String) -> Unit) {
         val user = auth.currentUser
         if (user == null) { callback(false, "No user signed in"); return }

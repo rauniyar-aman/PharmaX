@@ -1,9 +1,11 @@
 package com.example.pharmax.viewmodel
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ViewModel
 import com.example.pharmax.model.UserModel
 import com.example.pharmax.repo.UserRepo
 import com.example.pharmax.repo.UserRepoImpl
+import com.example.pharmax.ui.theme.AppThemeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +31,13 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
         _message.value = null
     }
 
+    private fun applyTheme(isDark: Boolean) {
+        AppThemeState.isDarkMode.value = isDark
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
+    }
+
     fun login(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
             _message.value = "Please fill all fields"
@@ -44,7 +53,10 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
             } else {
                 _isEmailUnverified.value = false
                 _message.value = msg
-                if (success && userData != null) _user.value = userData
+                if (success && userData != null) {
+                    _user.value = userData
+                    applyTheme(userData.darkMode)
+                }
             }
         }
     }
@@ -148,6 +160,7 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
             if (success) {
                 _user.value = null
                 _isLoggedOut.value = true
+                applyTheme(false)
             }
         }
     }
@@ -156,6 +169,17 @@ class UserViewModel(private val repo: UserRepo = UserRepoImpl()) : ViewModel() {
         repo.getCurrentUser { success, userData ->
             if (success && userData != null) {
                 _user.value = userData
+                applyTheme(userData.darkMode)
+            }
+        }
+    }
+
+    fun updateDarkMode(isDark: Boolean) {
+        val uid = _user.value?.uid ?: return
+        applyTheme(isDark)
+        repo.updateDarkMode(uid, isDark) { success, _ ->
+            if (success) {
+                _user.value = _user.value?.copy(darkMode = isDark)
             }
         }
     }

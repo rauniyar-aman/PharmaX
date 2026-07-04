@@ -53,8 +53,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
+import com.example.pharmax.viewmodel.MedicineViewModel
 
 class BrowseCategoriesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,13 +85,19 @@ fun BrowseCategoriesBody(
     onBack: () -> Unit = {}
 ) {
     val vm: CategoryViewModel = viewModel()
+    val medicineVm: MedicineViewModel = viewModel()
     val categories by vm.categories.collectAsState()
     val isLoading by vm.loading.collectAsState()
+    val medicines by medicineVm.medicines.collectAsState()
 
-    LaunchedEffect(Unit) { vm.loadCategories() }
+    LaunchedEffect(Unit) {
+        vm.loadCategories()
+        medicineVm.loadMedicines()
+    }
 
     BrowseCategoriesScreen(
         categories = categories.filter { it.isActive },
+        medicines = medicines,
         isLoading = isLoading,
         onCategoryClick = onCategoryClick,
         onBack = onBack
@@ -99,6 +107,7 @@ fun BrowseCategoriesBody(
 @Composable
 fun BrowseCategoriesScreen(
     categories: List<CategoryModel> = emptyList(),
+    medicines: List<MedicineModel> = emptyList(),
     isLoading: Boolean = false,
     onCategoryClick: (CategoryModel) -> Unit = {},
     onBack: () -> Unit = {}
@@ -106,8 +115,7 @@ fun BrowseCategoriesScreen(
     var searchQuery by remember { mutableStateOf("") }
 
     val filtered = categories.filter {
-        it.name.contains(searchQuery, ignoreCase = true) ||
-        it.type.contains(searchQuery, ignoreCase = true)
+        it.name.contains(searchQuery, ignoreCase = true)
     }
 
     Scaffold(
@@ -209,7 +217,11 @@ fun BrowseCategoriesScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filtered) { category ->
-                        CategoryCard(category = category, onClick = { onCategoryClick(category) })
+                        CategoryCard(
+                            category = category,
+                            medicineCount = medicines.count { it.category == category.name },
+                            onClick = { onCategoryClick(category) }
+                        )
                     }
                 }
             }
@@ -219,20 +231,7 @@ fun BrowseCategoriesScreen(
 }
 
 @Composable
-private fun CategoryCard(category: CategoryModel, onClick: () -> Unit) {
-    val typeColor = when (category.type) {
-        "Prescription" -> Color(0xFFFFEDED)
-        "Supplement"   -> Color(0xFFFFF9C4)
-        "Specialized"  -> Color(0xFFE3EFFF)
-        else           -> Color(0xFFE8F5E9)
-    }
-    val typeLabelColor = when (category.type) {
-        "Prescription" -> Color(0xFFBA1A1A)
-        "Supplement"   -> Color(0xFFF9A825)
-        "Specialized"  -> Color(0xFF0051D5)
-        else           -> Color(0xFF006B2C)
-    }
-
+private fun CategoryCard(category: CategoryModel, medicineCount: Int = 0, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -246,7 +245,7 @@ private fun CategoryCard(category: CategoryModel, onClick: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .background(typeColor, RoundedCornerShape(12.dp)),
+                    .background(Color(0xFFE8F5E9), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = category.icon, fontSize = 30.sp)
@@ -264,18 +263,8 @@ private fun CategoryCard(category: CategoryModel, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Box(
-                modifier = Modifier
-                    .background(typeColor, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-            ) {
-                Text(text = category.type, fontSize = 10.sp, color = typeLabelColor, fontWeight = FontWeight.Medium)
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
             Text(
-                text = "${category.medicineCount} medicines",
+                text = "$medicineCount medicines",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -288,10 +277,10 @@ private fun CategoryCard(category: CategoryModel, onClick: () -> Unit) {
 fun BrowseCategoriesPreview() {
     BrowseCategoriesScreen(
         categories = listOf(
-            CategoryModel("1", "Pain Relief", "", "For pain", "💊", "OTC", true, 12),
-            CategoryModel("2", "Antibiotics", "", "For infections", "🦠", "Prescription", true, 8),
-            CategoryModel("3", "Vitamins", "", "Supplements", "🌿", "Supplement", true, 20),
-            CategoryModel("4", "Skincare", "", "Skin products", "🩺", "Specialized", true, 5),
+            CategoryModel("1", "Pain Relief", "", "For pain", "💊", true),
+            CategoryModel("2", "Antibiotics", "", "For infections", "🦠", true),
+            CategoryModel("3", "Vitamins", "", "Supplements", "🌿", true),
+            CategoryModel("4", "Skincare", "", "Skin products", "🩺", true),
         )
     )
 }

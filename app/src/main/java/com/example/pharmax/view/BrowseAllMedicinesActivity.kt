@@ -70,7 +70,7 @@ class BrowseAllMedicinesActivity : ComponentActivity() {
                         i.putExtra("category", medicine.category)
                         i.putExtra("description", medicine.description)
                         i.putExtra("price", medicine.price)
-                        i.putExtra("stock", medicine.stock)
+                        i.putExtra("quantity", medicine.quantity)
                         i.putExtra("dosage", medicine.dosage)
                         i.putExtra("requiresPrescription", medicine.requiresPrescription)
                         i.putExtra("type", medicine.type)
@@ -221,15 +221,6 @@ fun BrowseAllMedicinesScreen(
 
 @Composable
 private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
-    val isOutOfStock = medicine.stock == 0
-    val isLowStock = medicine.stock in 1..10
-    val stockColor = if (isOutOfStock || isLowStock) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
-    val stockLabel = when {
-        isOutOfStock -> "Out of Stock"
-        isLowStock   -> "Low Stock"
-        else         -> "In Stock"
-    }
-
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -297,7 +288,7 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "NPR ${medicine.price.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0051D5))
-                    Text(text = stockLabel, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = stockColor)
+                    Text(text = "Qty: ${medicine.quantity}", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -309,9 +300,9 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
 fun BrowseAllMedicinesPreview() {
     BrowseAllMedicinesScreen(
         medicines = listOf(
-            MedicineModel("1", "Paracetamol 500mg", "Panadol", "Pain Relief", price = 120.0, stock = 45, requiresPrescription = false, type = "OTC"),
-            MedicineModel("2", "Amoxicillin 500mg", "Amoxil", "Antibiotics", price = 180.0, stock = 5, requiresPrescription = true, type = "Rx"),
-            MedicineModel("3", "Vitamin C 1000mg", "Redoxon", "Vitamins", price = 350.0, stock = 0, requiresPrescription = false, type = "OTC"),
+            MedicineModel("1", "Paracetamol 500mg", "Panadol", "Pain Relief", price = 120.0, quantity = 45, requiresPrescription = false, type = "OTC"),
+            MedicineModel("2", "Amoxicillin 500mg", "Amoxil", "Antibiotics", price = 180.0, quantity = 5, requiresPrescription = true, type = "Rx"),
+            MedicineModel("3", "Vitamin C 1000mg", "Redoxon", "Vitamins", price = 350.0, quantity = 0, requiresPrescription = false, type = "OTC"),
         )
     )
 }

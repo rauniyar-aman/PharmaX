@@ -76,7 +76,7 @@ class MedicineListActivity : ComponentActivity() {
                         i.putExtra("category", medicine.category)
                         i.putExtra("description", medicine.description)
                         i.putExtra("price", medicine.price)
-                        i.putExtra("stock", medicine.stock)
+                        i.putExtra("quantity", medicine.quantity)
                         i.putExtra("dosage", medicine.dosage)
                         i.putExtra("requiresPrescription", medicine.requiresPrescription)
                         i.putExtra("type", medicine.type)
@@ -235,15 +235,6 @@ fun MedicineListScreen(
 
 @Composable
 private fun MedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
-    val isOutOfStock = medicine.stock == 0
-    val isLowStock = medicine.stock in 1..10
-    val stockColor = if (isOutOfStock || isLowStock) MaterialTheme.colorScheme.error else Color(0xFF006B2C)
-    val stockLabel = when {
-        isOutOfStock -> "Out of Stock"
-        isLowStock   -> "Low Stock"
-        else         -> "In Stock"
-    }
-
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -311,10 +302,10 @@ private fun MedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
                         color = Color(0xFF0051D5)
                     )
                     Text(
-                        text = stockLabel,
+                        text = "Qty: ${medicine.quantity}",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = stockColor
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -329,9 +320,9 @@ fun MedicineListPreview() {
         categoryName = "Pain Relief",
         categoryIcon = "💊",
         medicines = listOf(
-            MedicineModel("1", "Paracetamol 500mg", "Panadol", "Pain Relief", price = 120.0, stock = 45, requiresPrescription = false, type = "OTC"),
-            MedicineModel("2", "Ibuprofen 400mg", "Brufen", "Pain Relief", price = 85.0, stock = 5, requiresPrescription = false, type = "OTC"),
-            MedicineModel("3", "Tramadol 50mg", "Tramal", "Pain Relief", price = 250.0, stock = 0, requiresPrescription = true, type = "Rx"),
+            MedicineModel("1", "Paracetamol 500mg", "Panadol", "Pain Relief", price = 120.0, quantity = 45, requiresPrescription = false, type = "OTC"),
+            MedicineModel("2", "Ibuprofen 400mg", "Brufen", "Pain Relief", price = 85.0, quantity = 5, requiresPrescription = false, type = "OTC"),
+            MedicineModel("3", "Tramadol 50mg", "Tramal", "Pain Relief", price = 250.0, quantity = 0, requiresPrescription = true, type = "Rx"),
         )
     )
 }

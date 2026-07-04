@@ -1,14 +1,16 @@
 package com.example.pharmax.model
 
+import com.google.firebase.database.PropertyName
+
 data class CategoryModel(
     val categoryId: String = "",
     val name: String = "",
     val slug: String = "",
     val description: String = "",
     val icon: String = "💊",
-    val type: String = "OTC",
-    val isActive: Boolean = true,
-    val medicineCount: Int = 0
+    @get:PropertyName("isActive")
+    @set:PropertyName("isActive")
+    var isActive: Boolean = true
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -17,9 +19,7 @@ data class CategoryModel(
             "slug" to slug,
             "description" to description,
             "icon" to icon,
-            "type" to type,
-            "isActive" to isActive,
-            "medicineCount" to medicineCount
+            "isActive" to isActive
         )
     }
 }

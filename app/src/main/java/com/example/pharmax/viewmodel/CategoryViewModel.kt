@@ -35,23 +35,29 @@ class CategoryViewModel(private val repo: CategoryRepo = CategoryRepoImpl()) : V
         }
     }
 
-    fun addCategory(name: String, description: String, icon: String, type: String, isActive: Boolean, onSuccess: () -> Unit) {
+    fun addCategory(name: String, description: String, icon: String, isActive: Boolean, onSuccess: () -> Unit) {
         if (name.isBlank()) {
             _message.value = "Category name is required"
             return
         }
         _loading.value = true
-        val model = CategoryModel(
-            name = name,
-            description = description,
-            icon = icon,
-            type = type,
-            isActive = isActive
-        )
-        repo.addCategory(model) { success, msg ->
-            _loading.value = false
-            _message.value = msg
-            if (success) onSuccess()
+        repo.checkCategoryNameExists(name) { exists ->
+            if (exists) {
+                _loading.value = false
+                _message.value = "A category with this name already exists"
+                return@checkCategoryNameExists
+            }
+            val model = CategoryModel(
+                name = name,
+                description = description,
+                icon = icon,
+                isActive = isActive
+            )
+            repo.addCategory(model) { success, msg ->
+                _loading.value = false
+                _message.value = msg
+                if (success) onSuccess()
+            }
         }
     }
 
@@ -61,10 +67,17 @@ class CategoryViewModel(private val repo: CategoryRepo = CategoryRepoImpl()) : V
             return
         }
         _loading.value = true
-        repo.updateCategory(model) { success, msg ->
-            _loading.value = false
-            _message.value = msg
-            if (success) onSuccess()
+        repo.checkCategoryNameExists(model.name, excludeId = model.categoryId) { exists ->
+            if (exists) {
+                _loading.value = false
+                _message.value = "A category with this name already exists"
+                return@checkCategoryNameExists
+            }
+            repo.updateCategory(model) { success, msg ->
+                _loading.value = false
+                _message.value = msg
+                if (success) onSuccess()
+            }
         }
     }
 

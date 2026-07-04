@@ -68,4 +68,22 @@ class CategoryRepoImpl : CategoryRepo {
                 }
             }
     }
+
+    override fun checkCategoryNameExists(name: String, excludeId: String, callback: (Boolean) -> Unit) {
+        ref.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val exists = snapshot.children.any { child ->
+                    val existing = child.getValue(CategoryModel::class.java)
+                    existing != null &&
+                        existing.categoryId != excludeId &&
+                        existing.name.trim().equals(name.trim(), ignoreCase = true)
+                }
+                callback(exists)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                callback(false)
+            }
+        })
+    }
 }

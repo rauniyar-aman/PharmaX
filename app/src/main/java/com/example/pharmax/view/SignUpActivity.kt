@@ -265,13 +265,6 @@ fun SignUpScreen(
                     Text(text = "Sign in", color = Color(0xFF006B2C), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onSignIn() })
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    Text(text = "256-bit AES", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text = "   |   ", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text = "HIPAA Compliant", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

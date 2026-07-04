@@ -137,18 +137,7 @@ fun SplashScreen() {
             )
         }
 
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(bottom = 40.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = "HIPAA Compliant", fontSize = 12.sp, color = Color(0xFF80DA8D))
-            Text(text = "  |  ", fontSize = 12.sp, color = Color(0xFF80DA8D))
-            Text(text = "End-to-End Encrypted", fontSize = 12.sp, color = Color(0xFF80DA8D))
-        }
+
     }
 }
 

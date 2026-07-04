@@ -153,15 +153,7 @@ fun SignInScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Access your clinical records and pharmacy services securely.",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
-            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -288,22 +280,7 @@ fun SignInScreen(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(text = "Create account", color = Color(0xFF006B2C), fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.clickable { onCreateAccount() })
             }
-
             Spacer(modifier = Modifier.height(40.dp))
-
-            Row {
-                Text(text = "Privacy Policy", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(text = "   |   ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(text = "Terms of Service", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(text = "   |   ", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(text = "HIPAA", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(text = "© 2024 PharmaX Healthcare Systems.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

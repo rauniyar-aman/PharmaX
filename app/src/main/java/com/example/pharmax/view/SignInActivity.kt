@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -170,7 +171,7 @@ fun SignInScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = onEmailChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("email"),
                     placeholder = { Text("name@email.com") },
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp),
@@ -194,7 +195,7 @@ fun SignInScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = onPasswordChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("password"),
                     placeholder = { Text("••••••••") },
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -221,7 +222,7 @@ fun SignInScreen(
                 ElevatedButton(
                     onClick = onSignIn,
                     enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp).testTag("signIn"),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF00501F), contentColor = Color.White),
                     elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp)

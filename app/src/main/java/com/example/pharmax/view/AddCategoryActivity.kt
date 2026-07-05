@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -307,7 +308,7 @@ fun AddCategoryScreen(
                     OutlinedTextField(
                         value = categoryName,
                         onValueChange = { categoryName = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag("categoryName"),
                         placeholder = { Text("e.g. Pain Relief", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
@@ -365,7 +366,7 @@ fun AddCategoryScreen(
             ) {
                 Button(
                     onClick = { onBack() },
-                    modifier = Modifier.weight(1f).height(52.dp),
+                    modifier = Modifier.weight(1f).height(52.dp).testTag("discardButton"),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
@@ -378,7 +379,7 @@ fun AddCategoryScreen(
 
                 ElevatedButton(
                     onClick = { onSave(categoryName, description, selectedIcon, isActive) },
-                    modifier = Modifier.weight(1f).height(52.dp),
+                    modifier = Modifier.weight(1f).height(52.dp).testTag("saveButton"),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.elevatedButtonColors(
                         containerColor = Color(0xFF00501F),

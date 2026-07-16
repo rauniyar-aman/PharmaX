@@ -45,12 +45,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.MedicineViewModel
@@ -75,6 +78,7 @@ class BrowseAllMedicinesActivity : ComponentActivity() {
                         i.putExtra("requiresPrescription", medicine.requiresPrescription)
                         i.putExtra("type", medicine.type)
                         i.putExtra("howToUse", medicine.howToUse)
+                        i.putExtra("imageUrl", medicine.imageUrl)
                         startActivity(i)
                     },
                     onBack = { finish() }
@@ -234,7 +238,16 @@ private fun AllMedicineCard(medicine: MedicineModel, onClick: () -> Unit) {
                     .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "💊", fontSize = 26.sp)
+                if (medicine.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = medicine.imageUrl,
+                        contentDescription = medicine.name,
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(text = "💊", fontSize = 26.sp)
+                }
             }
 
             Spacer(modifier = Modifier.width(14.dp))

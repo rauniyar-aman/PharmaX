@@ -60,11 +60,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pharmax.model.CategoryModel
+import com.example.pharmax.model.OrderModel
 import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.CategoryViewModel
 import com.example.pharmax.viewmodel.NotificationViewModel
+import com.example.pharmax.viewmodel.OrderViewModel
 import com.example.pharmax.viewmodel.UserViewModel
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,12 +89,15 @@ fun DashboardBody() {
     val vm: UserViewModel = viewModel()
     val categoryVm: CategoryViewModel = viewModel()
     val notificationVm: NotificationViewModel = viewModel()
+    val orderVm: OrderViewModel = viewModel()
 
     val message by vm.message.collectAsState()
     val user by vm.user.collectAsState()
     val isLoggedOut by vm.isLoggedOut.collectAsState()
     val categories by categoryVm.categories.collectAsState()
     val unreadCount by notificationVm.unreadCount.collectAsState()
+    val orders by orderVm.orders.collectAsState()
+    val lastOrder = orders.maxByOrNull { it.orderedAt }
 
     LaunchedEffect(Unit) {
         vm.loadCurrentUser()
@@ -97,7 +105,12 @@ fun DashboardBody() {
     }
 
     LaunchedEffect(user) {
-        user?.uid?.let { uid -> if (uid.isNotBlank()) notificationVm.loadNotifications(uid) }
+        user?.uid?.let { uid ->
+            if (uid.isNotBlank()) {
+                notificationVm.loadNotifications(uid)
+                orderVm.loadUserOrders(uid)
+            }
+        }
     }
 
     LaunchedEffect(message) {
@@ -119,11 +132,13 @@ fun DashboardBody() {
         firstName = user?.fullName?.split(" ")?.firstOrNull() ?: "User",
         categories = categories.filter { it.isActive },
         unreadNotificationCount = unreadCount,
+        lastOrder = lastOrder,
         onNotificationsClick = {
             val i = Intent(context, NotificationCenterActivity::class.java)
             i.putExtra("recipientId", user?.uid ?: "")
             context.startActivity(i)
-        }
+        },
+        onLastOrderClick = { context.startActivity(Intent(context, MyOrdersActivity::class.java)) }
     )
 }
 
@@ -132,7 +147,9 @@ fun DashboardScreen(
     firstName: String = "User",
     categories: List<CategoryModel> = emptyList(),
     unreadNotificationCount: Int = 0,
-    onNotificationsClick: () -> Unit = {}
+    lastOrder: OrderModel? = null,
+    onNotificationsClick: () -> Unit = {},
+    onLastOrderClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -216,6 +233,16 @@ fun DashboardScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Recent Order ─────────────────────────────────────────────
+            if (lastOrder != null) {
+                SectionHeader(title = "Recent Order")
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    RecentOrderCard(order = lastOrder, onClick = onLastOrderClick)
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             // ── Shop by Category ─────────────────────────────────────────
             SectionHeader(title = "Shop by Category")
@@ -302,6 +329,47 @@ fun CategoryChip(label: String, icon: String, onClick: () -> Unit = {}) {
         ) {
             Text(text = icon, fontSize = 14.sp)
             Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
+}
+
+@Composable
+fun RecentOrderCard(order: OrderModel, onClick: () -> Unit = {}) {
+    val statusColor = when (order.paymentStatus) {
+        "Paid" -> Color(0xFF006B2C)
+        "Failed" -> MaterialTheme.colorScheme.error
+        else -> Color(0xFFE65100)
+    }
+    val statusBg = when (order.paymentStatus) {
+        "Paid" -> Color(0xFFE8F5E9)
+        "Failed" -> Color(0xFFFFEDED)
+        else -> Color(0xFFFFF3E0)
+    }
+    val dateText = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(order.orderedAt))
+
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() }
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = order.medicineName,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(modifier = Modifier.background(statusBg, RoundedCornerShape(50.dp)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                    Text(text = order.paymentStatus, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = statusColor)
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = "Qty: ${order.quantity} · NPR ${order.totalAmount.toInt()}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(text = dateText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

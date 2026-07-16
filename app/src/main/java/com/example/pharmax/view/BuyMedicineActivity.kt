@@ -97,6 +97,12 @@ class BuyMedicineActivity : ComponentActivity() {
                         i.putExtra("medicineId", medicineId)
                         i.putExtra("medicineName", medicineName)
                         startActivity(i)
+                    },
+                    onOrderPlaced = {
+                        val i = Intent(this, MyOrdersActivity::class.java)
+                        i.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        startActivity(i)
+                        finish()
                     }
                 )
             }
@@ -112,7 +118,8 @@ fun BuyMedicineBody(
     isRx: Boolean,
     medicineType: String,
     onBack: () -> Unit,
-    onUploadPrescription: () -> Unit
+    onUploadPrescription: () -> Unit,
+    onOrderPlaced: () -> Unit
 ) {
     val context = LocalContext.current
     val userVm: UserViewModel = viewModel()
@@ -133,7 +140,7 @@ fun BuyMedicineBody(
         user?.uid?.let { uid -> if (uid.isNotBlank()) prescriptionVm.loadUserPrescriptions(uid) }
     }
 
-    val approvedPrescriptions = prescriptions.filter { it.status == "Approved" }
+    val selectablePrescriptions = prescriptions.filter { it.status != "Rejected" }
 
     fun placeOrder(transactionId: String) {
         val order = OrderModel(
@@ -152,7 +159,7 @@ fun BuyMedicineBody(
         )
         orderVm.placeOrder(order) {
             Toast.makeText(context, "Order placed successfully!", Toast.LENGTH_LONG).show()
-            onBack()
+            onOrderPlaced()
         }
     }
 
@@ -162,14 +169,14 @@ fun BuyMedicineBody(
         isRx = isRx,
         quantity = quantity,
         onQuantityChange = { quantity = it },
-        approvedPrescriptions = approvedPrescriptions,
+        selectablePrescriptions = selectablePrescriptions,
         selectedPrescriptionId = selectedPrescriptionId,
         onSelectPrescription = { selectedPrescriptionId = it },
         isProcessing = isInitiatingPayment || isPlacingOrder,
         onUploadPrescription = onUploadPrescription,
         onPay = {
             if (isRx && selectedPrescriptionId.isBlank()) {
-                Toast.makeText(context, "Please select an approved prescription for this medicine", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Please select a prescription for this medicine", Toast.LENGTH_SHORT).show()
                 return@BuyMedicineScreen
             }
             isInitiatingPayment = true
@@ -221,7 +228,7 @@ fun BuyMedicineScreen(
     isRx: Boolean = false,
     quantity: Int = 1,
     onQuantityChange: (Int) -> Unit = {},
-    approvedPrescriptions: List<PrescriptionModel> = emptyList(),
+    selectablePrescriptions: List<PrescriptionModel> = emptyList(),
     selectedPrescriptionId: String = "",
     onSelectPrescription: (String) -> Unit = {},
     isProcessing: Boolean = false,
@@ -233,7 +240,7 @@ fun BuyMedicineScreen(
     val selectedLabel = if (selectedPrescriptionId.isBlank()) {
         "None"
     } else {
-        val p = approvedPrescriptions.find { it.prescriptionId == selectedPrescriptionId }
+        val p = selectablePrescriptions.find { it.prescriptionId == selectedPrescriptionId }
         p?.let { prescriptionLabel(it) } ?: "None"
     }
 
@@ -300,23 +307,23 @@ fun BuyMedicineScreen(
 
             // ── Prescription selection ──────────────────────────────────
             Text(
-                text = if (isRx) "SELECT APPROVED PRESCRIPTION *" else "ATTACH APPROVED PRESCRIPTION (OPTIONAL)",
+                text = if (isRx) "SELECT PRESCRIPTION *" else "ATTACH PRESCRIPTION (OPTIONAL)",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp
             )
 
-            if (isRx && approvedPrescriptions.isEmpty()) {
+            if (isRx && selectablePrescriptions.isEmpty()) {
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3CD))
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text(text = "You need an approved prescription", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF856404))
+                        Text(text = "You need to upload a prescription", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF856404))
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "This medicine requires a prescription approved by our pharmacist before you can buy it.",
+                            text = "This medicine requires a prescription. You can order as soon as you upload one — it doesn't need to be approved yet, but our pharmacist will still need to verify it before your order ships.",
                             fontSize = 13.sp,
                             color = Color(0xFF856404)
                         )
@@ -353,7 +360,7 @@ fun BuyMedicineScreen(
                         if (!isRx) {
                             DropdownMenuItem(text = { Text("None") }, onClick = { onSelectPrescription(""); expanded = false })
                         }
-                        approvedPrescriptions.forEach { p ->
+                        selectablePrescriptions.forEach { p ->
                             DropdownMenuItem(
                                 text = { Text(prescriptionLabel(p)) },
                                 onClick = { onSelectPrescription(p.prescriptionId); expanded = false }
@@ -374,7 +381,7 @@ fun BuyMedicineScreen(
 
             ElevatedButton(
                 onClick = onPay,
-                enabled = !isProcessing && !(isRx && approvedPrescriptions.isEmpty()),
+                enabled = !isProcessing && !(isRx && selectablePrescriptions.isEmpty()),
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(50.dp),
                 colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF5C2D91), contentColor = Color.White),
@@ -403,7 +410,8 @@ private fun QuantityStepperButton(symbol: String, enabled: Boolean, onClick: () 
 private fun prescriptionLabel(p: PrescriptionModel): String {
     val dateText = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(p.uploadedAt))
     val label = p.name.ifBlank { p.medicineName.ifBlank { "General Prescription" } }
-    return "$label — $dateText"
+    val statusSuffix = if (p.status == "Approved") "" else " (${p.status} Approval)"
+    return "$label — $dateText$statusSuffix"
 }
 
 @Preview(showBackground = true, showSystemUi = true)

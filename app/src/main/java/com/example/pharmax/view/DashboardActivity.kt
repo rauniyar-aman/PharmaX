@@ -234,16 +234,6 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Recent Order ─────────────────────────────────────────────
-            if (lastOrder != null) {
-                SectionHeader(title = "Recent Order")
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    RecentOrderCard(order = lastOrder, onClick = onLastOrderClick)
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
             // ── Shop by Category ─────────────────────────────────────────
             SectionHeader(title = "Shop by Category")
             Spacer(modifier = Modifier.height(12.dp))
@@ -287,6 +277,16 @@ fun DashboardScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // ── Recent Order ─────────────────────────────────────────────
+            if (lastOrder != null) {
+                SectionHeader(title = "Recent Order")
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    RecentOrderCard(order = lastOrder, onClick = onLastOrderClick)
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }
@@ -345,6 +345,12 @@ fun RecentOrderCard(order: OrderModel, onClick: () -> Unit = {}) {
         "Failed" -> Color(0xFFFFEDED)
         else -> Color(0xFFFFF3E0)
     }
+    val orderStatusColor = when (order.orderStatus) {
+        "Delivered" -> Color(0xFF006B2C)
+        "Shipped" -> Color(0xFF0051D5)
+        "Processing" -> Color(0xFFE65100)
+        else -> Color(0xFF5C2D91)
+    }
     val dateText = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(order.orderedAt))
 
     Card(
@@ -370,6 +376,8 @@ fun RecentOrderCard(order: OrderModel, onClick: () -> Unit = {}) {
             Text(text = "Qty: ${order.quantity} · NPR ${order.totalAmount.toInt()}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(2.dp))
             Text(text = dateText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = "Order Status: ${order.orderStatus}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = orderStatusColor)
         }
     }
 }

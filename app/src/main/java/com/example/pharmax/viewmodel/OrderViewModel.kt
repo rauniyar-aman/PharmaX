@@ -74,4 +74,24 @@ class OrderViewModel(
             }
         }
     }
+
+    fun updateOrderStatus(orderId: String, status: String, userId: String, medicineName: String) {
+        repo.updateOrderStatus(orderId, status) { success, msg ->
+            _message.value = msg
+            if (success) {
+                if (userId.isNotBlank()) {
+                    notificationRepo.addNotification(
+                        com.example.pharmax.model.NotificationModel(
+                            recipientId = userId,
+                            title = "Order $status",
+                            message = "Your order${if (medicineName.isNotBlank()) " for $medicineName" else ""} is now $status.",
+                            type = "order",
+                            referenceId = orderId
+                        )
+                    ) { _, _ -> }
+                }
+                loadAllOrders()
+            }
+        }
+    }
 }

@@ -140,6 +140,12 @@ private fun MyOrderCard(order: OrderModel) {
         "Failed" -> Color(0xFFFFEDED)
         else -> Color(0xFFFFF3E0)
     }
+    val orderStatusColor = when (order.orderStatus) {
+        "Delivered" -> Color(0xFF006B2C)
+        "Shipped" -> Color(0xFF0051D5)
+        "Processing" -> Color(0xFFE65100)
+        else -> Color(0xFF5C2D91)
+    }
     val dateText = remember(order.orderedAt) {
         SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()).format(Date(order.orderedAt))
     }
@@ -167,6 +173,8 @@ private fun MyOrderCard(order: OrderModel) {
             Text(text = "Qty: ${order.quantity} · NPR ${order.totalAmount.toInt()}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(2.dp))
             Text(text = dateText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(text = "Order Status: ${order.orderStatus}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = orderStatusColor)
         }
     }
 }

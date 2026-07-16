@@ -104,6 +104,8 @@ fun AdminOrderManagementBody() {
         }
     }
 
+    RequireAdminAccess(role = adminUser?.role)
+
     AdminOrderManagementScreen(
         orders = orders,
         isLoading = isLoading,
@@ -121,6 +123,7 @@ fun AdminOrderManagementBody() {
         onNavigateCategories = { context.startActivity(Intent(context, AdminCategoryManagement::class.java)) },
         onNavigatePrescriptions = { context.startActivity(Intent(context, AdminPrescriptionManagement::class.java)) },
         onNavigateProfile = { context.startActivity(Intent(context, AdminProfileActivity::class.java)) },
+        onUpdateStatus = { order, status -> vm.updateOrderStatus(order.orderId, status, order.userId, order.medicineName) },
         onLogout = { userVm.logOut() }
     )
 }
@@ -139,6 +142,7 @@ fun AdminOrderManagementScreen(
     onNavigateCategories: () -> Unit = {},
     onNavigatePrescriptions: () -> Unit = {},
     onNavigateProfile: () -> Unit = {},
+    onUpdateStatus: (OrderModel, String) -> Unit = { _, _ -> },
     onLogout: () -> Unit = {}
 ) {
     var selectedFilter by remember { mutableStateOf("All") }
@@ -244,7 +248,7 @@ fun AdminOrderManagementScreen(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(filtered) { order -> AdminOrderCard(order) }
+                    items(filtered) { order -> AdminOrderCard(order, onUpdateStatus = { status -> onUpdateStatus(order, status) }) }
                     item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
@@ -253,8 +257,10 @@ fun AdminOrderManagementScreen(
     }
 }
 
+private val ORDER_STATUS_STAGES = listOf("Confirmed", "Processing", "Shipped", "Delivered")
+
 @Composable
-private fun AdminOrderCard(order: OrderModel) {
+private fun AdminOrderCard(order: OrderModel, onUpdateStatus: (String) -> Unit = {}) {
     val statusColor = when (order.paymentStatus) {
         "Paid" -> Color(0xFF006B2C)
         "Failed" -> Color(0xFFBA1A1A)
@@ -298,6 +304,28 @@ private fun AdminOrderCard(order: OrderModel) {
             }
             Spacer(modifier = Modifier.height(2.dp))
             Text(text = dateText, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = "Order Status", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ORDER_STATUS_STAGES.forEach { stage ->
+                    val isSelected = order.orderStatus == stage
+                    Surface(
+                        shape = RoundedCornerShape(50.dp),
+                        color = if (isSelected) Color(0xFF00501F) else MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.clickable { if (!isSelected) onUpdateStatus(stage) }
+                    ) {
+                        Text(
+                            text = stage,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }

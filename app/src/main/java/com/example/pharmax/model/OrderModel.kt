@@ -14,6 +14,7 @@ data class OrderModel(
     val prescriptionId: String = "",
     val paymentMethod: String = "Khalti",
     val paymentStatus: String = "Pending",
+    val orderStatus: String = "Confirmed",
     val transactionId: String = "",
     val orderedAt: Long = System.currentTimeMillis()
 ) {
@@ -32,6 +33,7 @@ data class OrderModel(
             "prescriptionId" to prescriptionId,
             "paymentMethod" to paymentMethod,
             "paymentStatus" to paymentStatus,
+            "orderStatus" to orderStatus,
             "transactionId" to transactionId,
             "orderedAt" to orderedAt
         )

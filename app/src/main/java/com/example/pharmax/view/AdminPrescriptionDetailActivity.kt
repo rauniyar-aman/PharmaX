@@ -58,6 +58,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.PrescriptionViewModel
+import com.example.pharmax.viewmodel.UserViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -116,9 +117,13 @@ fun AdminPrescriptionDetailBody(
 ) {
     val context = LocalContext.current
     val vm: PrescriptionViewModel = viewModel()
+    val userVm: UserViewModel = viewModel()
 
     val isLoading by vm.loading.collectAsState()
     val message by vm.message.collectAsState()
+    val adminUser by userVm.user.collectAsState()
+
+    LaunchedEffect(Unit) { userVm.loadCurrentUser() }
 
     LaunchedEffect(message) {
         if (!message.isNullOrBlank()) {
@@ -126,6 +131,8 @@ fun AdminPrescriptionDetailBody(
             vm.clearMessage()
         }
     }
+
+    RequireAdminAccess(role = adminUser?.role)
 
     AdminPrescriptionDetailScreen(
         userName = userName,

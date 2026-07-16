@@ -124,6 +124,8 @@ fun AdminProfileBody(onBack: () -> Unit = {}) {
         }
     }
 
+    RequireAdminAccess(role = user?.role)
+
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             imageVm.uploadImage(it, context) { imageUrl ->

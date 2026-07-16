@@ -126,6 +126,8 @@ fun AdminDashboardBody() {
         }
     }
 
+    RequireAdminAccess(role = adminUser?.role)
+
     val pendingPrescriptions = prescriptions.filter { it.status == "Pending" }
 
     AdminDashboardScreen(
@@ -457,7 +459,7 @@ fun AdminSideDrawer(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onLogout() }
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -574,6 +576,18 @@ fun AvatarCircle(
             )
         } else {
             Text(text = fallbackText, fontSize = fontSize, fontWeight = FontWeight.Bold, color = textColor)
+        }
+    }
+}
+
+@Composable
+fun RequireAdminAccess(role: String?) {
+    val context = LocalContext.current
+    LaunchedEffect(role) {
+        if (role != null && role != "admin") {
+            val intent = Intent(context, DashboardActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
         }
     }
 }

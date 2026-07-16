@@ -124,6 +124,8 @@ fun AdminCategoryManagementBody() {
         }
     }
 
+    RequireAdminAccess(role = adminUser?.role)
+
     AdminCategoryManagementScreen(
         categories = categories,
         medicines = medicines,
@@ -404,10 +406,6 @@ fun CategoryListItem(
                     Text(text = category.name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = category.slug, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "•", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
                                 .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(50.dp))

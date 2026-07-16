@@ -115,6 +115,8 @@ fun AddCategoryBody(editCategory: CategoryModel? = null, onBack: () -> Unit = {}
         }
     }
 
+    RequireAdminAccess(role = adminUser?.role)
+
     AddCategoryScreen(
         editCategory = editCategory,
         isLoading = isLoading,

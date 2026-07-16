@@ -107,6 +107,8 @@ fun AdminPrescriptionManagementBody() {
         }
     }
 
+    RequireAdminAccess(role = adminUser?.role)
+
     AdminPrescriptionManagementScreen(
         prescriptions = prescriptions,
         isLoading = isLoading,

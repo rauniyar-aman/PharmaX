@@ -57,13 +57,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.pharmax.model.MedicineModel
 import com.example.pharmax.ui.theme.PharmaXTheme
 import com.example.pharmax.viewmodel.ADMIN_NOTIFICATION_BUCKET
@@ -118,6 +121,8 @@ fun AdminMedicineManagementBody() {
             context.startActivity(intent)
         }
     }
+
+    RequireAdminAccess(role = adminUser?.role)
 
     AdminMedicineManagementScreen(
         medicines = medicines,
@@ -373,14 +378,23 @@ fun MedicineListItem(
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
 
-            // Image thumbnail placeholder
+            // Image thumbnail
             Box(
                 modifier = Modifier
                     .size(90.dp)
                     .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "💊", fontSize = 36.sp)
+                if (medicine.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = medicine.imageUrl,
+                        contentDescription = medicine.name,
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(text = "💊", fontSize = 36.sp)
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))

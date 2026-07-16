@@ -147,6 +147,8 @@ fun AddMedicineBody(editMedicine: MedicineModel? = null) {
         }
     }
 
+    RequireAdminAccess(role = adminUser?.role)
+
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             imageVm.uploadImage(it, context) { url -> imageUrl = url }

@@ -12,7 +12,7 @@ class CategoryRepoImpl : CategoryRepo {
 
     override fun addCategory(model: CategoryModel, callback: (Boolean, String) -> Unit) {
         val id = ref.push().key ?: ""
-        val newModel = model.copy(categoryId = id, slug = "/slug/${model.name.lowercase().replace(" ", "-")}")
+        val newModel = model.copy(categoryId = id, slug = model.name.lowercase().replace(" ", "-"))
         ref.child(id).setValue(newModel)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
